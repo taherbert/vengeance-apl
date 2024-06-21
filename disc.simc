@@ -1,0 +1,42 @@
+actions+=/variable,name=time_to_shadowfiend,op=setif,condition=talent.mindbender,value=cooldown.mindbender.remains_expected,value_else=cooldown.shadowfiend.remains_expected
+# Twilight Equilibrium is buffing shadow damage
+actions+=/variable,name=te_shadow,op=set,value=buff.twilight_equilibrium_shadow_amp.up|variable.te_none
+
+
+actions+=/power_word_radiance,if=(variable.time_to_shadowfiend<=execute_time&buff.harsh_discipline.down)
+actions+=/purge_the_wicked,if=!ticking|refreshable|(dot.purge_the_wicked.remains<12&variable.time_to_shadowfiend<=execute_time)
+
+actions+=/call_action_list,name=cooldowns
+actions+=/run_action_list,name=scov,if=buff.shadow_covenant.up
+
+actions+=/purge_the_wicked,if=talent.purge_the_wicked&(target.time_to_die>(0.3*dot.purge_the_wicked.duration))&(!ticking|refreshable)
+actions+=/shadow_word_pain,if=!talent.purge_the_wicked&(target.time_to_die>(0.3*dot.shadow_word_pain.duration))&(!ticking|refreshable)
+actions+=/shadow_word_death,if=target.health.pct<20&cooldown.shadow_word_death.duration<variable.time_to_shadowfiend
+# actions+=/mind_blast,if=(!talent.dark_indulgence|buff.power_of_the_dark_side.down)&cooldown.mind_blast.duration<variable.time_to_shadowfiend
+actions+=/penance,if=cooldown.penance.duration_expected<variable.time_to_shadowfiend
+actions+=/mindgames,if=talent.shattered_perceptions&(!talent.twilight_equilibrium|variable.te_shadow)
+actions+=/shadow_word_death,if=(target.time_to_pct_20>(0.5*cooldown.shadow_word_death.duration))&(!talent.twilight_equilibrium|variable.te_shadow)
+actions+=/mindgames,if=!talent.shattered_perceptions&(!talent.twilight_equilibrium|variable.te_shadow)
+actions+=/halo,if=spell_targets>3
+actions+=/divine_star,if=spell_targets>3
+actions+=/smite
+
+# Shadow Covenant is active
+actions.scov+=/smite,if=talent.twilight_equilibrium&!variable.te_shadow&(cooldown.mind_blast.remains<=execute_time|cooldown.penance.remains<=execute_time|cooldown.shadow_word_death.remains<=execute_time)
+actions.scov+=/mind_blast
+actions.scov+=/penance
+actions.scov+=/shadow_word_death
+actions.scov+=/divine_star,if=spell_targets>3
+actions.scov+=/halo,if=spell_targets>3
+actions.scov+=/smite
+
+## Cooldowns
+# hold PI to use with shadow covenant if we have it
+actions.cooldowns+=/power_infusion,if=!talent.shadow_covenant|(cooldown.shadowfiend.up|buff.shadow_covenant.up)
+# Don't use pets during shadow covenant windows, wasting GCDs
+actions.cooldowns+=/shadowfiend,if=!talent.mindbender.enabled
+actions.cooldowns+=/mindbender,if=talent.mindbender.enabled
+# sync potion with PI
+actions.cooldowns+=/potion,if=buff.power_infusion.up
+# sync trinkets with PI
+actions.cooldowns+=/use_items,if=buff.power_infusion.up|cooldown.power_infusion.remains>=cooldown
