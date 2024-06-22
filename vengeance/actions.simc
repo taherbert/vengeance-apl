@@ -1,0 +1,61 @@
+# Generic pre-combat actions
+actions.precombat=flask
+actions.precombat+=/augmentation
+actions.precombat+=/food
+actions.precombat+=/snapshot_stats
+
+# Pre-pull actions
+# actions.precombat+=/sigil_of_flame
+# actions.precombat+=/immolation_aura
+
+### Ideas
+# Generate 40 souls before the buffs of the last aldrachi reaver ends
+# Variables needed: souls_generated_since_last_aldrachi_reaver vs. buff remains
+
+# After how many targets does it make sense to use shear first vs. soul cleave first with the fury of the aldrachi buff?
+
+# Need to make sure reaver's mark is upkept
+
+# Never ever overcap on soul fragments
+
+# Maintain thrill of the fight as much as possible (consume both buffs)
+
+# Generally -- generate 40 souls ASAP, consume both buffs, and repeat
+
+# Does bulk extraction help?
+
+# prep one reaver's glaive, then save up to be able to use a second reaver's glaive right after by storing up another 40 souls?
+
+# vr to reset felblade if needed fury
+
+# have cooldowns ready for thrill of the fight?
+
+
+
+# Art of the Glaive stacking buff, up to 40 stacks
+actions=variable,name=rg_stacks,value=buff.reavers_glaive.stack
+# Reaver's Glaive is ready to be cast
+actions+=/variable,name=rg_ready,value=buff.reavers_glaive.up
+# Reaver's Glaive buffs are available
+actions+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up
+
+
+actions+=/call_action_list,name=rg_active,if=variable.rg_active
+actions+=/call_action_list,name=filler,if=!(variable.rg_active|variable.rg_ready)
+# at some point the below should make sure we have enough fury to cast the enhanced spells, RG generating fury talent might be helpful
+actions+=/reavers_glaive,if=variable.rg_ready&fury>=30
+actions+=/fracture,if=variable.rg_ready&fury<30|variable.rg_active&fury<30
+
+
+# actions.rg_active+=/fracture
+# actions.rg_active+=/soul_cleave,if=!buff.rending_strike.up
+
+actions.rg_active+=/soul_cleave
+actions.rg_active+=/fracture,if=!buff.glaive_flurry.up
+
+
+actions.filler+=/fracture
+actions.filler+=/soul_cleave
+
+# profileset."cleave first"+=actions.rg_active=soul_cleave
+# profileset."cleave first"+=actions.rg_active+=/fracture,if=!prev_gcd.1.soul_cleave
