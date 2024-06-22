@@ -1,0 +1,33 @@
+# Core configuration
+desired_targets=1
+max_time=300
+optimal_raid=1
+iterations=10000
+target_error=0.05
+report_details=0
+single_actor_batch=1
+optimize_expressions=1
+html=/Users/tom/Documents/GitHub/APL/report.html
+json2=/Users/tom/Documents/GitHub/APL/report.json
+report_details=1
+demonhunter="T31_Demon_Hunter_Vengeance"
+source=default
+spec=vengeance
+level=70
+race=night_elf
+timeofday=day
+role=tank
+position=front
+
+# Default consumables
+potion=elemental_potion_of_ultimate_power_3
+flask=iced_phial_of_corrupting_rage_3
+food=feisty_fish_sticks
+augmentation=draconic
+temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
+
+# Imports
+input=talents.simc
+input=gear.simc
+input=actions.simc
+
