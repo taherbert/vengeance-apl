@@ -38,24 +38,36 @@ actions=variable,name=rg_stacks,value=buff.reavers_glaive.stack
 actions+=/variable,name=rg_ready,value=buff.reavers_glaive.up
 # Reaver's Glaive buffs are available
 actions+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up
+actions+=/variable,name=rg_enhance_cleave,value=1
+
+actions+=/auto_attack
+# actions+=/disrupt,if=target.debuff.casting.react
+# actions+=/infernal_strike,use_off_gcd=1
+# actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains
+# actions+=/potion,use_off_gcd=1
+# actions+=/use_items,use_off_gcd=1
+# actions+=/call_action_list,name=externals
 
 
+
+actions+=/call_action_list,name=rg_prep,if=variable.rg_ready
 actions+=/call_action_list,name=rg_active,if=variable.rg_active
-actions+=/call_action_list,name=filler,if=!(variable.rg_active|variable.rg_ready)
-# at some point the below should make sure we have enough fury to cast the enhanced spells, RG generating fury talent might be helpful
-actions+=/reavers_glaive,if=variable.rg_ready&fury>=30
-actions+=/fracture,if=variable.rg_ready&fury<30|variable.rg_active&fury<30
+actions+=/call_action_list,name=main,if=!(variable.rg_active|variable.rg_ready)
 
 
-# actions.rg_active+=/fracture
-# actions.rg_active+=/soul_cleave,if=!buff.rending_strike.up
+# Make sure we have enough fury to cast enhanced soul cleave
+# TODO: after bugfix for keen_engagement, we can change 30 to 10
+actions.rg_prep+=/reavers_glaive,if=fury>=30|talent.keen_engagement&fury>=30|variable.rg_enhance_cleave&(talent.fracture&fury>=5|talent.keen_engagement|talent.shear_fury)
+actions.rg_prep+=/fracture,if=talent.fracture
+actions.rg_prep+=/shear,if=talent.shear_fury
 
-actions.rg_active+=/soul_cleave
-actions.rg_active+=/fracture,if=!buff.glaive_flurry.up
+
+actions.rg_active+=/fracture,if=variable.rg_enhance_cleave|!buff.glaive_flurry.up
+actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave|!buff.rending_strike.up
 
 
-actions.filler+=/fracture
-actions.filler+=/soul_cleave
+actions.main+=/fracture
+actions.main+=/soul_cleave
 
 # profileset."cleave first"+=actions.rg_active=soul_cleave
 # profileset."cleave first"+=actions.rg_active+=/fracture,if=!prev_gcd.1.soul_cleave

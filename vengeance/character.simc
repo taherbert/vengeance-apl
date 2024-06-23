@@ -1,0 +1,17 @@
+# Character configuration
+demonhunter="T31_Demon_Hunter_Vengeance"
+source=default
+spec=vengeance
+level=70
+race=night_elf
+timeofday=day
+role=tank
+position=front
+talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMYYmZZGmZsNjZMjZwMz2MzsNzMMDGAAAAmlZghxyGTygZmBLA
+
+# Default consumables
+potion=elemental_potion_of_ultimate_power_3
+flask=iced_phial_of_corrupting_rage_3
+food=feisty_fish_sticks
+augmentation=draconic
+temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3

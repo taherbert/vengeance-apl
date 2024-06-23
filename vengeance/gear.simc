@@ -13,5 +13,5 @@
 # finger2=onyx_impostors_birthright,id=204398,bonus_id=10359/1488/6935,gem_id=192922,enchant=devotion_of_versatility_3
 # trinket1=elementium_pocket_anvil,id=202617,bonus_id=10359/1488
 # trinket2=cataclysmic_signet_brand,id=207166,bonus_id=10359/1488
-main_hand=thorncaller_claw,id=207784,bonus_id=10359/1488,enchant=wafting_devotion_3
-off_hand=stormslash,id=193688,bonus_id=10359/1488,enchant=wafting_devotion_3
+main_hand=thorncaller_claw,id=207784,bonus_id=10359/1488
+off_hand=stormslash,id=193688,bonus_id=10359/1488
