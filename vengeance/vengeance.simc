@@ -1,6 +1,6 @@
 # SimC configuration
-threads=24
-profileset_work_threads=2
+# threads=24
+# profileset_work_threads=2
 optimal_raid=1
 target_error=0.05
 iterations=5000

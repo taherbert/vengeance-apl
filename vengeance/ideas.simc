@@ -50,3 +50,15 @@
 
 # # Total souls + incoming souls
 # actions+=/variable,name=total_souls,value=soul_fragments+variable.incoming_souls
+
+actions+=/variable,name=soul_spawn_window,value=gcd.max*8
+actions+=/variable,name=num_spawnable_souls,op=reset
+# rng souls -- needs testing
+actions+=/variable,name=num_spawnable_souls,op=add,value=5
+actions+=/variable,name=num_spawnable_souls,op=add,value=6,if=cooldown.soul_carver.remains<variable.soul_spawn_window
+actions+=/variable,name=num_spawnable_souls,op=add,value=3+talent.soul_sigils.rank,if=cooldown.sigil_of_spite.remains<variable.soul_spawn_window&talent.sigil_of_spite
+actions+=/variable,name=num_spawnable_souls,op=add,value=1,if=cooldown.sigil_of_flame.remains<variable.soul_spawn_window&talent.soul_sigils
+actions+=/variable,name=num_spawnable_souls,op=add,value=floor(0.6*spell_targets.immolation_aura)>?5,if=talent.fallout&cooldown.immolation_aura.remains<variable.soul_spawn_window
+actions+=/variable,name=num_spawnable_souls,op=add,value=spell_targets.bulk_extraction>?5,if=talent.bulk_extraction&cooldown.bulk_extraction.remains<variable.soul_spawn_window
+actions+=/variable,name=num_spawnable_souls,op=add,value=4,if=buff.metamorphosis.remains<variable.soul_spawn_window&cooldown.metamorphosis.remains>variable.soul_spawn_window&cooldown.fel_devastation.remains>variable.soul_spawn_window
+actions+=/variable,name=num_spawnable_souls,op=add,value=6,if=buff.metamorphosis.remains>variable.soul_spawn_window|cooldown.metamorphosis.remains<variable.soul_spawn_window|cooldown.fel_devastation.remains<variable.soul_spawn_window

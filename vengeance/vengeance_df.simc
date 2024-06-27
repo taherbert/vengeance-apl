@@ -152,7 +152,7 @@ actions.fiery_demise+=/spirit_bomb,if=variable.can_spb
 # Single Target
 actions.single_target+=/the_hunt
 actions.single_target+=/soul_carver
-actions.single_target=fel_devastation
+actions.single_target+=/fel_devastation
 actions.single_target+=/elysian_decree
 actions.single_target+=/soul_cleave,if=!variable.dont_cleave
 actions.single_target+=/fracture

@@ -1,5 +1,5 @@
 # Character configuration
-demonhunter="T31_Demon_Hunter_Vengeance"
+demonhunter="1T_5min"
 source=default
 spec=vengeance
 level=70
@@ -7,7 +7,9 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMYYmZZGmZsNjZMjZwMz2MzsNzMMDGAAAAmlZghxyGTygZmBLA
+talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMLzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZghxyGTygZmBLA
+desired_targets=1
+max_time=300
 
 # Default consumables
 potion=elemental_potion_of_ultimate_power_3

@@ -1,17 +1,16 @@
-# Default gear
-# head=screaming_torchfiends_burning_scowl,id=217228,bonus_id=10359/1488/6935,gem_id=192991,enchant=incandescent_essence
-# neck=terross_captive_core,id=195502,bonus_id=10359/1491/8782,gem_id=192945/192945/192945
-# shoulders=screaming_torchfiends_horned_memento,id=217230,bonus_id=10359/1491
-# back=voice_of_the_silent_star,id=204465,bonus_id=10359/1495/10884
-# chest=screaming_torchfiends_binding,id=217226,bonus_id=10359/1488,enchant_id=6625
-# wrists=lifebound_bindings,id=193419,bonus_id=9379/10359/1485/6935,gem_id=192945,crafted_stats=36/32
-# hands=screaming_torchfiends_grasp,id=217227,bonus_id=10359/1488
-# waist=elders_volcanic_binding,id=202655,bonus_id=10359/1488/6935,gem_id=192985
-# legs=loathsome_thunderhosen,id=195530,bonus_id=10359/1488,enchant=frosted_armor_kit_3
-# feet=lifebound_boots,id=193398,bonus_id=9379/10359/1485,crafted_stats=36/32
-# finger1=seal_of_diurnas_chosen,id=195480,bonus_id=10359/1488/6935,gem_id=192922,enchant=devotion_of_haste_3
-# finger2=onyx_impostors_birthright,id=204398,bonus_id=10359/1488/6935,gem_id=192922,enchant=devotion_of_versatility_3
-# trinket1=elementium_pocket_anvil,id=202617,bonus_id=10359/1488
-# trinket2=cataclysmic_signet_brand,id=207166,bonus_id=10359/1488
-main_hand=thorncaller_claw,id=207784,bonus_id=10359/1488
-off_hand=stormslash,id=193688,bonus_id=10359/1488
+head=impalers_of_the_hypogeal_nemesis,id=212065
+neck=sureki_zealots_insignia,id=225577
+shoulders=warmantle_of_the_hypogeal_nemesis,id=212063
+back=wings_of_shattered_sorrow,id=225574
+chest=chestguard_of_the_hypogeal_nemesis,id=212068
+wrists=armguards_of_the_hypogeal_nemesis,id=212061
+hands=claws_of_the_hypogeal_nemesis,id=212066
+waist=behemoths_eroded_cinch,id=225583
+legs=pantaloons_of_the_hypogeal_nemesis,id=212064
+feet=chitinspiked_jackboots,id=212445
+finger1=seal_of_the_voidtouched,id=225749
+finger2=seal_of_the_broken_mountain,id=225751
+trinket1=swarmlords_authority,id=212450
+trinket2=void_reapers_contract,id=212456
+main_hand=void_reapers_warp_blade,id=219877
+off_hand=duelists_dancing_steel,id=212392

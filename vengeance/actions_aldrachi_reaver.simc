@@ -1,0 +1,52 @@
+actions.ar+=/variable,name=single_target,value=spell_targets.spirit_bomb=1
+actions.ar+=/variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
+actions.ar+=/variable,name=big_aoe,value=spell_targets.spirit_bomb>=6
+# Which target and soul counts should we spirit bomb at?
+actions.ar+=/variable,name=can_spb,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
+# Reaver's Glaive is active and ready to be cast
+actions.ar+=/variable,name=rg_ready,value=buff.reavers_glaive.up
+# At least one of Reaver's Glaive's buffs are active and ready to be cast
+actions.ar+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up
+# During Reaver's Glaive, enhance our soul cleave (true) or shear (false)
+actions.ar+=/variable,name=rg_enhance_cleave,value=0
+
+
+
+actions.ar+=/potion,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+actions.ar+=/use_items,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+actions.ar+=/call_action_list,name=externals,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+actions.ar+=/call_action_list,name=rg_active,if=variable.rg_active
+actions.ar+=/call_action_list,name=main
+
+
+
+# Reaver's Glaive buffs are active, use them in the order variable.rg_enhance_cleave dictates
+actions.rg_active+=/fracture,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
+actions.rg_active+=/shear,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
+actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up|variable.rg_enhance_cleave&!buff.rending_strike.up
+
+# Main action list
+actions.main+=/soul_cleave,if=buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28
+actions.main+=/spirit_bomb,if=buff.art_of_the_glaive.stack+soul_fragments>=30
+actions.main+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(debuff.reavers_mark.up|(buff.rending_strike.up&!buff.glaive_flurry.up))
+actions.main+=/the_hunt,if=!(buff.reavers_glaive.up|buff.art_of_the_glaive.stack>=25)
+# We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
+actions.main+=/reavers_glaive,if=(buff.reavers_glaive.up&buff.art_of_the_glaive.stack>=28)|debuff.reavers_mark.remains<=(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|action.shear.execute_time)+gcd.max+gcd.max)
+actions.main+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=(execute_time+gcd.remains)
+actions.main+=/immolation_aura
+actions.main+=/sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!in_flight)
+actions.main+=/soul_carver
+actions.main+=/sigil_of_spite
+actions.main+=/bulk_extraction,if=spell_targets>=3
+actions.main+=/spirit_bomb,if=variable.can_spb
+actions.main+=/fel_devastation,if=spell_targets>=2
+actions.main+=/soul_cleave,if=fury>=70
+actions.main+=/fracture
+actions.main+=/shear
+actions.main+=/soul_cleave
+actions.main+=/felblade
+actions.main+=/throw_glaive
+
+# External buffs
+actions.externals=invoke_external_buff,name=symbol_of_hope
+actions.externals+=/invoke_external_buff,name=power_infusion

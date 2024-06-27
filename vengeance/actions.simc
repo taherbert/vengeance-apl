@@ -5,69 +5,16 @@ actions.precombat+=/food
 actions.precombat+=/snapshot_stats
 
 # Pre-pull actions
-# actions.precombat+=/sigil_of_flame
-# actions.precombat+=/immolation_aura
+actions.precombat+=/sigil_of_flame
+actions.precombat+=/immolation_aura
 
-### Ideas
-# Generate 40 souls before the buffs of the last aldrachi reaver ends
-# Variables needed: souls_generated_since_last_aldrachi_reaver vs. buff remains
-
-# After how many targets does it make sense to use shear first vs. soul cleave first with the fury of the aldrachi buff?
-
-# Need to make sure reaver's mark is upkept
-
-# Never ever overcap on soul fragments
-
-# Maintain thrill of the fight as much as possible (consume both buffs)
-
-# Generally -- generate 40 souls ASAP, consume both buffs, and repeat
-
-# Does bulk extraction help?
-
-# prep one reaver's glaive, then save up to be able to use a second reaver's glaive right after by storing up another 40 souls?
-
-# vr to reset felblade if needed fury
-
-# have cooldowns ready for thrill of the fight?
-
-
-
-# Art of the Glaive stacking buff, up to 40 stacks
-actions=variable,name=rg_stacks,value=buff.reavers_glaive.stack
-# Reaver's Glaive is ready to be cast
-actions+=/variable,name=rg_ready,value=buff.reavers_glaive.up
-# Reaver's Glaive buffs are available
-actions+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up
-actions+=/variable,name=rg_enhance_cleave,value=1
-
+# Generic actions for both hero trees
 actions+=/auto_attack
-# actions+=/disrupt,if=target.debuff.casting.react
-# actions+=/infernal_strike,use_off_gcd=1
-# actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains
-# actions+=/potion,use_off_gcd=1
-# actions+=/use_items,use_off_gcd=1
-# actions+=/call_action_list,name=externals
+actions+=/disrupt,if=target.debuff.casting.react
+actions+=/infernal_strike,use_off_gcd=1
+actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains
+actions+=/run_action_list,name=ar,if=hero_tree.aldrachi_reaver
+actions+=/run_action_list,name=fs,if=hero_tree.felscarred
 
-
-
-actions+=/call_action_list,name=rg_prep,if=variable.rg_ready
-actions+=/call_action_list,name=rg_active,if=variable.rg_active
-actions+=/call_action_list,name=main,if=!(variable.rg_active|variable.rg_ready)
-
-
-# Make sure we have enough fury to cast enhanced soul cleave
-# TODO: after bugfix for keen_engagement, we can change 30 to 10
-actions.rg_prep+=/reavers_glaive,if=fury>=30|talent.keen_engagement&fury>=30|variable.rg_enhance_cleave&(talent.fracture&fury>=5|talent.keen_engagement|talent.shear_fury)
-actions.rg_prep+=/fracture,if=talent.fracture
-actions.rg_prep+=/shear,if=talent.shear_fury
-
-
-actions.rg_active+=/fracture,if=variable.rg_enhance_cleave|!buff.glaive_flurry.up
-actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave|!buff.rending_strike.up
-
-
-actions.main+=/fracture
-actions.main+=/soul_cleave
-
-# profileset."cleave first"+=actions.rg_active=soul_cleave
-# profileset."cleave first"+=actions.rg_active+=/fracture,if=!prev_gcd.1.soul_cleave
+input=/Users/tom/Documents/GitHub/APL/vengeance/actions_aldrachi_reaver.simc
+input=/Users/tom/Documents/GitHub/APL/vengeance/actions_felscarred.simc
