@@ -10,10 +10,11 @@ optimize_expressions=1
 html=/Users/tom/Documents/GitHub/APL/report.html
 output=/Users/tom/Documents/GitHub/APL/log.txt
 # log=1
+# debug=1
 # json2=/Users/tom/Documents/GitHub/APL/report.json
 
 # Imports
 input=/Users/tom/Documents/GitHub/APL/vengeance/character.simc
-input=/Users/tom/Documents/GitHub/APL/vengeance/profiles.simc
 input=/Users/tom/Documents/GitHub/APL/vengeance/gear.simc
 input=/Users/tom/Documents/GitHub/APL/vengeance/actions.simc
+input=/Users/tom/Documents/GitHub/APL/vengeance/profiles.simc

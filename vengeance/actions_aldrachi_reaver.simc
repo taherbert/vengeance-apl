@@ -1,5 +1,21 @@
+# Soul fragment thresholds with Fiery Demise active
+$(1t_spb_souls_fd)=5
+$(small_aoe_spb_souls_fd)=4
+$(big_aoe_spb_souls_fd)=3
+
+# Soul fragment thresholds without Fiery Demise active
+$(1t_spb_souls)=100
+$(small_aoe_spb_souls)=4
+$(big_aoe_spb_souls)=4
+
+# Spirit Bomb conditions
+actions.ar+=/variable,name=spb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(1t_spb_souls_fd))+(variable.small_aoe*$(small_aoe_spb_souls_fd))+(variable.big_aoe*$(big_aoe_spb_souls_fd)),value_else=(variable.single_target*$(1t_spb_souls))+(variable.small_aoe*$(small_aoe_spb_souls))+(variable.big_aoe*$(big_aoe_spb_souls))
+actions.ar+=/variable,name=can_spb,value=soul_fragments>=variable.spb_threshold
+actions.ar+=/variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb_threshold
+actions.fs+=/variable,name=dont_soul_cleave,value=(!variable.can_spb&variable.can_spb_soon)
+
 # Which target and soul counts should we spirit bomb at?
-actions.ar+=/variable,name=can_spb,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
+# actions.ar+=/variable,name=can_spb,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
 # Reaver's Glaive is active and ready to be cast
 actions.ar+=/variable,name=rg_ready,value=buff.reavers_glaive.up
 # At least one of Reaver's Glaive's buffs are active and ready to be cast
@@ -33,9 +49,9 @@ actions.main+=/sigil_of_spite
 actions.main+=/bulk_extraction,if=spell_targets>=3
 actions.main+=/spirit_bomb,if=variable.can_spb
 actions.main+=/fel_devastation,if=spell_targets>=2
-actions.main+=/soul_cleave,if=fury>=70
+actions.main+=/soul_cleave,if=fury>=70&!variable.dont_soul_cleave
 actions.main+=/fracture
 actions.main+=/shear
-actions.main+=/soul_cleave
+actions.main+=/soul_cleave,if=!variable.dont_soul_cleave
 actions.main+=/felblade
 actions.main+=/throw_glaive

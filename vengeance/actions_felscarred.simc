@@ -1,53 +1,71 @@
 # with only one brand, do we want to send it before actual meta or with fel dev?
-# need some logic around number of targets, fracture, soul cleave, etc
-actions.fs+=/variable,name=can_spbomb,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
-actions.fs+=/variable,name=can_spburst,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=4)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
+# support for not having fiery demise
 
+# Soul fragment thresholds with Fiery Demise active
+$(1t_spbomb_souls_fd)=5
+$(1t_spburst_souls_fd)=4
+$(small_aoe_spbomb_souls_fd)=4
+$(small_aoe_spburst_souls_fd)=4
+$(big_aoe_spbomb_souls_fd)=3
+$(big_aoe_spburst_souls_fd)=3
 
-actions.fs+=/variable,name=dont_spend_fury,value=cooldown.fel_devastation.remains<=(gcd.max*2)&fury<90
+# Soul fragment thresholds without Fiery Demise active
+$(1t_spbomb_souls)=5
+$(1t_spburst_souls)=5
+$(small_aoe_spbomb_souls)=4
+$(small_aoe_spburst_souls)=4
+$(big_aoe_spbomb_souls)=4
+$(big_aoe_spburst_souls)=3
 
-actions.fs+=/variable,name=fiery_brand_back_before_meta,op=setif,condition=talent.down_in_flames,value=charges>=max_charges|(charges_fractional>=1&full_recharge_time<=$(one_action))|(charges_fractional>=1&((max_charges-charges_fractional)*cooldown.fiery_brand.duration)<=cooldown.metamorphosis.remains),value_else=cooldown.fiery_brand.duration<=cooldown.metamorphosis.remains
+# Spirit Bomb conditions
+actions.fs+=/variable,name=spbomb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(1t_spbomb_souls_fd))+(variable.small_aoe*$(small_aoe_spbomb_souls_fd))+(variable.big_aoe*$(big_aoe_spbomb_souls_fd)),value_else=(variable.single_target*$(1t_spbomb_souls))+(variable.small_aoe*$(small_aoe_spbomb_souls))+(variable.big_aoe*$(big_aoe_spbomb_souls))
+actions.fs+=/variable,name=can_spbomb,value=soul_fragments>=variable.spbomb_threshold
+actions.fs+=/variable,name=can_spbomb_soon,value=soul_fragments.total>=variable.spbomb_threshold
 
-actions.fs+=/potion,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
-actions.fs+=/use_items,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+# Spirit Burst conditions
+actions.fs+=/variable,name=spburst_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(1t_spburst_souls_fd))+(variable.small_aoe*$(small_aoe_spburst_souls_fd))+(variable.big_aoe*$(big_aoe_spburst_souls_fd)),value_else=(variable.single_target*$(1t_spburst_souls))+(variable.small_aoe*$(small_aoe_spburst_souls))+(variable.big_aoe*$(big_aoe_spburst_souls))
+actions.fs+=/variable,name=can_spburst,value=soul_fragments>=variable.spburst_threshold
+actions.fs+=/variable,name=can_spburst_soon,value=soul_fragments.total>=variable.spburst_threshold
+
+actions.fs+=/variable,name=dont_soul_cleave,value=cooldown.fel_devastation.remains<=$(this_action)&fury<80|(!variable.can_spbomb&variable.can_spbomb_soon&!buff.demonsurge_hardcast.up)|(variable.can_spburst_soon&!variable.can_spburst&buff.demonsurge_hardcast.up)
+
+actions.fs+=/variable,name=fiery_brand_back_before_meta,op=setif,condition=talent.down_in_flames,value=charges>=max_charges|(charges_fractional>=1&full_recharge_time<=$(this_action))|(charges_fractional>=1&((max_charges-charges_fractional)*cooldown.fiery_brand.duration)<=cooldown.metamorphosis.remains),value_else=cooldown.fiery_brand.duration<=cooldown.metamorphosis.remains
 
 actions.fs+=/immolation_aura,if=!(prev_gcd.1.sigil_of_flame&cooldown.metamorphosis.up)
 
-actions.fs+=/call_action_list,name=externals,if=buff.metamorphosis.up&buff.demonsurge_hardcast.up
 actions.fs+=/call_action_list,name=fel_dev,if=buff.metamorphosis.up&!buff.demonsurge_hardcast.up&!(cooldown.metamorphosis.up&!buff.demonsurge_soul_sunder.up&!buff.demonsurge_spirit_burst.up)
 actions.fs+=/call_action_list,name=metamorphosis,if=buff.metamorphosis.up&buff.demonsurge_hardcast.up
-actions.fs+=/call_action_list,name=meta_prep,if=cooldown.metamorphosis.remains<=gcd.max*3
-
-# ((cooldown.fel_devastation.remains%cooldown.fel_devastation.duration)>0.2)&)
+actions.fs+=/call_action_list,name=meta_prep,if=cooldown.metamorphosis.remains<=(gcd.max*3+gcd.remains)
 
 actions.meta_prep+=/metamorphosis,use_off_gcd=1,if=cooldown.sigil_of_flame.charges<1
 actions.meta_prep+=/fiery_brand,if=active_dot.fiery_brand=0
 actions.meta_prep+=/sigil_of_flame
 
-actions.fel_dev+=/spirit_burst,if=variable.can_spburst|(buff.metamorphosis.remains<$(one_action)&buff.demonsurge_spirit_burst.up)
-actions.fel_dev+=/soul_sunder,if=!variable.dont_spend_fury|(buff.metamorphosis.remains<$(one_action)&buff.demonsurge_soul_sunder.up)
+actions.fel_dev+=/spirit_burst,if=variable.can_spburst|(buff.metamorphosis.remains<$(this_action)&buff.demonsurge_spirit_burst.up)
+actions.fel_dev+=/soul_sunder,if=!variable.dont_soul_cleave|(buff.metamorphosis.remains<$(this_action)&buff.demonsurge_soul_sunder.up)
 
+actions.metamorphosis+=/call_action_list,name=externals
+actions.metamorphosis+=/potion,use_off_gcd=1
+actions.metamorphosis+=/use_items,use_off_gcd=1
 actions.metamorphosis+=/fel_devastation
 actions.metamorphosis+=/sigil_of_doom
-actions.metamorphosis+=/sigil_of_spite,if=soul_fragments.total<3
-actions.metamorphosis+=/soul_carver,if=soul_fragments.total<3
+actions.metamorphosis+=/sigil_of_spite,if=!variable.can_spburst&!variable.can_spburst_soon
+actions.metamorphosis+=/soul_carver,if=!variable.can_spburst&!variable.can_spburst_soon
 actions.metamorphosis+=/spirit_burst,if=variable.can_spburst
-actions.metamorphosis+=/fracture,if=soul_fragments.total<=3&(buff.demonsurge_spirit_burst.up|prev_gcd.1.fracture|soul_fragments>=2)
-actions.metamorphosis+=/soul_sunder
-actions.metamorphosis+=/felblade,if=soul_fragments.total>=4&fury<40|soul_fragments.total<2&fury<30
+actions.metamorphosis+=/soul_sunder,if=!variable.dont_soul_cleave
+actions.metamorphosis+=/felblade
 actions.metamorphosis+=/fracture
 
-actions.fs+=/fiery_brand,if=,if=active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta
-actions.fs+=/fel_devastation,if=soul_fragments.total>=4
-actions.fs+=/soul_carver,if=(active_dot.fiery_brand>0&soul_fragments.total<3)
-actions.fs+=/felblade,if=cooldown.fel_devastation.remains<=$(one_action)&fury<50&(cooldown.fracture.charges_fractional<1|fury<25)
-actions.fs+=/fracture,if=cooldown.fel_devastation.remains<=$(one_action)&((fury<50&fury>=25)|soul_fragments.total<5)
+actions.fs+=/fiery_brand,if=(talent.down_in_flames&full_recharge_time<=$(this_action))|active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta
+actions.fs+=/fel_devastation,if=variable.can_spburst|variable.can_spburst_soon
+actions.fs+=/felblade,if=cooldown.fel_devastation.remains<=(gcd.max*4)&fury.deficit>40
+actions.fs+=/soul_carver,if=(cooldown.soul_carver.duration<=(cooldown.metamorphosis.remains+buff.metamorphosis.duration-(gcd.max*4)))&!variable.can_spbomb&!variable.can_spbomb_soon
 actions.fs+=/the_hunt
-actions.fs+=/sigil_of_spite,if=soul_fragments.total<3
-actions.fs+=/sigil_of_flame,if=full_recharge_time<cooldown.metamorphosis.remains
-actions.fs+=/spirit_bomb,if=variable.can_spbomb&!variable.dont_spend_fury
-actions.fs+=/fracture,if=(soul_fragments.total<5&(soul_fragments.total>=3|prev_gcd.1.fracture|soul_fragments>=2))|variable.can_spbomb&fury<40|fury<30
-actions.fs+=/felblade,if=variable.can_spbomb&fury<40|soul_fragments.total<2&fury<30
-actions.fs+=/soul_cleave,if=!variable.dont_spend_fury
+actions.fs+=/sigil_of_spite,if=(cooldown.soul_carver.duration<=(cooldown.metamorphosis.remains+buff.metamorphosis.duration-(gcd.max*4)))&!variable.can_spbomb
+actions.fs+=/sigil_of_flame,if=full_recharge_time<=(cooldown.metamorphosis.remains-(gcd.max*3))
+actions.fs+=/spirit_bomb,if=variable.can_spbomb
+actions.fs+=/fracture,if=variable.dont_soul_cleave|((variable.can_spbomb|variable.can_spbomb_soon)&fury<40)|prev_gcd.1.fracture
+actions.fs+=/felblade,if=variable.dont_soul_cleave|((variable.can_spbomb|variable.can_spbomb_soon)&fury<40)|fury<30
+actions.fs+=/soul_cleave,if=!variable.dont_soul_cleave
 actions.fs+=/fracture
 actions.fs+=/throw_glaive

@@ -5,12 +5,12 @@ actions.precombat+=/food
 actions.precombat+=/snapshot_stats
 
 # Global Variables
-actions+=/variable,name=single_target,value=spell_targets.spirit_bomb=1
-actions+=/variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
-actions+=/variable,name=big_aoe,value=spell_targets.spirit_bomb>=6
+actions.precombat+=/variable,name=single_target,value=spell_targets.spirit_bomb=1
+actions.precombat+=/variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
+actions.precombat+=/variable,name=big_aoe,value=spell_targets.spirit_bomb>=6
 
 # Global Templates
-$(one_action)=gcd.remains+execute_time
+$(this_action)=gcd.remains+execute_time
 
 # Pre-pull actions
 actions.precombat+=/sigil_of_flame,if=hero_tree.aldrachi_reaver
