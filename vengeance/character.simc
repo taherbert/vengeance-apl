@@ -7,7 +7,14 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMLzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZghxyGTygZmBLA
+# DiF fel
+talents=CUkAxqeQK0B5NG0FroXuLKhPHBAYMzMjhZkZmxYYmZZMYsNjZMjZYmZ2mZmtZmhZwAAAAwsMziZbmZmltZZaaGMzMDbA
+# IS fel
+# talents=CUkAxqeQK0B5NG0FroXuLKhPHBAYMzMjhZkZmxYYmZbmBjtZMjZMDmZ2mZmtZmhZwAAAAwsMziZbmZmltZZaaGMzMDbA
+# IS aldrachi
+# talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMbzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
+# DiF aldrachi
+# talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMLzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
 desired_targets=1
 max_time=300
 

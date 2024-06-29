@@ -1,6 +1,3 @@
-actions.ar+=/variable,name=single_target,value=spell_targets.spirit_bomb=1
-actions.ar+=/variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
-actions.ar+=/variable,name=big_aoe,value=spell_targets.spirit_bomb>=6
 # Which target and soul counts should we spirit bomb at?
 actions.ar+=/variable,name=can_spb,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
 # Reaver's Glaive is active and ready to be cast
@@ -10,17 +7,13 @@ actions.ar+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_st
 # During Reaver's Glaive, enhance our soul cleave (true) or shear (false)
 actions.ar+=/variable,name=rg_enhance_cleave,value=0
 
-
-
 actions.ar+=/potion,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
 actions.ar+=/use_items,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
 actions.ar+=/call_action_list,name=externals,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
 actions.ar+=/call_action_list,name=rg_active,if=variable.rg_active
 actions.ar+=/call_action_list,name=main
 
-
-
-# Reaver's Glaive buffs are active, use them in the order variable.rg_enhance_cleave dictates
+# Reaver's Glaive buffs are active, use them in the order that the variable rg_enhance_cleave dictates
 actions.rg_active+=/fracture,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
 actions.rg_active+=/shear,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
 actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up|variable.rg_enhance_cleave&!buff.rending_strike.up
@@ -46,7 +39,3 @@ actions.main+=/shear
 actions.main+=/soul_cleave
 actions.main+=/felblade
 actions.main+=/throw_glaive
-
-# External buffs
-actions.externals=invoke_external_buff,name=symbol_of_hope
-actions.externals+=/invoke_external_buff,name=power_infusion

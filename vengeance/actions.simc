@@ -4,8 +4,16 @@ actions.precombat+=/augmentation
 actions.precombat+=/food
 actions.precombat+=/snapshot_stats
 
+# Global Variables
+actions+=/variable,name=single_target,value=spell_targets.spirit_bomb=1
+actions+=/variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
+actions+=/variable,name=big_aoe,value=spell_targets.spirit_bomb>=6
+
+# Global Templates
+$(one_action)=gcd.remains+execute_time
+
 # Pre-pull actions
-actions.precombat+=/sigil_of_flame
+actions.precombat+=/sigil_of_flame,if=hero_tree.aldrachi_reaver
 actions.precombat+=/immolation_aura
 
 # Generic actions for both hero trees
@@ -16,5 +24,10 @@ actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_ac
 actions+=/run_action_list,name=ar,if=hero_tree.aldrachi_reaver
 actions+=/run_action_list,name=fs,if=hero_tree.felscarred
 
+# External buffs
+actions.externals=invoke_external_buff,name=symbol_of_hope
+actions.externals+=/invoke_external_buff,name=power_infusion
+
 input=/Users/tom/Documents/GitHub/APL/vengeance/actions_aldrachi_reaver.simc
 input=/Users/tom/Documents/GitHub/APL/vengeance/actions_felscarred.simc
+
