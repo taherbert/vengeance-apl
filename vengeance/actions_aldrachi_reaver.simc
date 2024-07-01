@@ -1,6 +1,6 @@
 # enhance cleave if target time to die is less than 10s
 # Soul fragment thresholds with Fiery Demise active
-
+# TODO: ADD FD_READY?
 $(st_spb_souls_fd)=5
 $(small_aoe_spb_souls_fd)=4
 $(big_aoe_spb_souls_fd)=3
@@ -44,7 +44,7 @@ actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurr
 # Main action list
 # TODO - abstract "reavers mark will end by the time we need to cast this" for the first half of this below
 # TODO -- can we simplify some of the logic below?
-actions.main+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up
+actions.main+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
 actions.main+=/soul_cleave,if=(debuff.reavers_mark.remains<($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
 actions.main+=/spirit_bomb,if=(debuff.reavers_mark.remains<($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
 # We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
@@ -53,14 +53,15 @@ actions.main+=/the_hunt,if=!buff.reavers_glaive.up
 actions.main+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=$(this_action)
 actions.main+=/immolation_aura
 actions.main+=/sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!in_flight)
-actions.main+=/soul_carver,if=((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
 actions.main+=/sigil_of_spite
+actions.main+=/soul_carver,if=active_dot.fiery_brand>0&((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
 actions.main+=/bulk_extraction,if=spell_targets>=3
 actions.main+=/spirit_bomb,if=variable.can_spb
 actions.main+=/fel_devastation,if=spell_targets>=2
-actions.main+=/soul_cleave,if=fury>=70&!variable.dont_soul_cleave
+actions.main+=/soul_cleave,if=fury>=60&!variable.dont_soul_cleave
+actions.main+=/felblade,if=fury<30
 actions.main+=/fracture
-actions.main+=/shear
 actions.main+=/soul_cleave,if=!variable.dont_soul_cleave
+actions.main+=/shear
 actions.main+=/felblade
 actions.main+=/throw_glaive

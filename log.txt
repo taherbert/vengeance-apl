@@ -14,18 +14,18 @@ Raid Events:
 
 
 DPS Ranking:
- 358370 100.0%  Raid
- 358370  100.0%  1T_5min
+ 359151 100.0%  Raid
+ 359151  100.0%  1T_5min
 
 HPS Ranking:
-  21434 100.0%%  Raid
-  21434  100.0%  1T_5min
+  20994 100.0%%  Raid
+  20994  100.0%  1T_5min
 
 Player: 1T_5min night_elf demonhunter vengeance 70
-  DPS=358370.03566223563 DPS-Error=187.9296199941829/0.05% DPS-Range=23232.9879287495/6.48%
-  HPS=21434.451548089615 HPS-Error=116.8808074105844/0.55% HPS-Range=12237.750397553245/57.09%
-  DTPS=37578.64038764901 DTPS-Error=119.34778923654727/0.32% DTPS-Range=15379.407700569074/40.93%
-  DPR=21157.39627996624 RPS-Out=16.923461622537165 RPS-In=17.246276069218062 Resource=fury Waiting=0 ApM=81.52014338577052
+  DPS=359150.9765462455 DPS-Error=188.09514942875052/0.05% DPS-Range=23913.28141889794/6.66%
+  HPS=20993.66131770565 HPS-Error=120.49093824479365/0.57% HPS-Range=11732.595974560332/55.89%
+  DTPS=37270.37841380598 DTPS-Error=120.52804870701182/0.32% DTPS-Range=15600.12222332104/41.86%
+  DPR=20919.10312453502 RPS-Out=17.154830588235615 RPS-In=17.446603313407184 Resource=fury Waiting=0 ApM=81.71061150082139
   Talents: CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGDzMbzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
   Covenant: invalid
   Core Stats:    strength=2825|2739(2739)  agility=21360|21274(21274)  stamina=171383|163222(94212)  intellect=1582|1421(1421)  spirit=0|0(0)  health=3427660|3264440  mana=0|0
@@ -43,16 +43,17 @@ Player: 1T_5min night_elf demonhunter vengeance 70
     demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains/run_action_list,name=ar,if=hero_tree.aldrachi_reaver
     run_action_list,name=fs,if=hero_tree.felscarred
   Priorities (actions.main):
-    metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up
+    metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
     soul_cleave,if=(debuff.reavers_mark.remains<(gcd.remains+execute_time+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
     spirit_bomb,if=(debuff.reavers_mark.remains<(gcd.remains+execute_time+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
     reavers_glaive,if=(buff.reavers_glaive.up&buff.art_of_the_glaive.stack>=28)|(debuff.reavers_mark.remains<=(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max*2))|cooldown.the_hunt.remains<(gcd.remains+execute_time+gcd.max*2)
     the_hunt,if=!buff.reavers_glaive.up
     fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=gcd.remains+execute_time/immolation_aura
-    sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!in_flight)
-    soul_carver,if=((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite/sigil_of_spite
+    sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!in_flight)/sigil_of_spite
+    soul_carver,if=active_dot.fiery_brand>0&((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
     bulk_extraction,if=spell_targets>=3/spirit_bomb,if=variable.can_spb/fel_devastation,if=spell_targets>=2
-    soul_cleave,if=fury>=70&!variable.dont_soul_cleave/fracture/shear/soul_cleave,if=!variable.dont_soul_cleave/felblade/throw_glaive
+    soul_cleave,if=fury>=60&!variable.dont_soul_cleave/felblade,if=fury<30/fracture/soul_cleave,if=!variable.dont_soul_cleave/shear/felblade
+    throw_glaive
   Priorities (actions.rg_active):
     metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(buff.rending_strike.up&!buff.glaive_flurry.up)
     the_hunt,if=!buff.reavers_glaive.up&(debuff.reavers_mark.remains>(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max))
@@ -70,111 +71,111 @@ Player: 1T_5min night_elf demonhunter vengeance 70
     call_action_list,name=externals,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
     call_action_list,name=rg_active,if=variable.rg_active/call_action_list,name=main
   Actions:
-    art_of_the_glaive              Count=   0.0|  0.000sec  DPE=     0| 1.74%  DPET=      0  DPR=      0  pDPS=  6226  Miss= 0.00%  Hit= 23548| 23228| 25153  Crit= 47093| 46455| 50307|55.81%
-    auto_attack_mh                 Count= 249.2|  1.398sec  DPE= 17694| 4.09%  DPET=  12715  DPR=      0  pDPS= 14666  Miss=16.35%  Hit= 12685| 11072| 15107  Crit= 25368| 22144| 30215|55.85%
-    auto_attack_oh                 Count= 241.7|  1.441sec  DPE=  8835| 1.98%  DPET=   6183  DPR=      0  pDPS=  7102  Miss=16.40%  Hit=  6338|  5536|  7554  Crit= 12677| 11072| 15107|55.79%
-    consume_soul_lesser            Count= 433.4|  0.685sec  DPE=  3102|20.86%  DPET=      0  DPR=      0  pDPS=  4488  Miss= 0.00%  Hit=  3102|     0| 78298
-    demon_spikes                   Count=  25.3| 12.370sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    disrupt                        Count=   2.2| 95.794sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    felblade                       Count=   0.0|  0.000sec  DPE= 94608| 0.00%  DPET= 201296  DPR=      0  pDPS=     7  Miss= 0.00%  Hit= 59255| 44317| 82124  Crit=121925| 88634|161314|56.41%
-    fiery_brand                    Count=   5.4| 60.364sec  DPE=857691| 1.37%  DPET= 904259  DPR=      0  pDPS=  4914  Miss= 0.00%  Hit=173854|104652|202673  Crit=347913|209304|405345|55.49%
-    fiery_brand_dot                Count=   0.0|  0.000sec  DPE=     0| 2.97%  DPET=      0  DPR=      0  pDPS= 10648  TickCount=   133  MissTick= 0.00%  Tick= 15406|  5659| 18294  CritTick= 30812| 11318| 36588|55.84%  UpTime= 43.85%
-    fracture                       Count=  86.8|  3.463sec  DPE= 92635| 7.46%  DPET=  97409  DPR=      0  pDPS= 26734  Miss= 0.00%  Hit= 29749| 18535| 39041  Crit= 59465| 37070| 78083|55.79%
-    frailty_heal                   Count= 299.9|  1.000sec  DPE=  9732|45.28%  DPET=      0  DPR=      0  pDPS=  9692  Miss= 0.00%  Hit=  9734|     0|613724
-    immolation_aura                Count=  30.3|  9.817sec  DPE=203523| 5.39%  DPET= 213561  DPR=      0  pDPS= 19300  Miss= 0.00%  Hit= 26580| 14052| 41338  Crit= 53063| 28104| 82675|61.74%  MissTick= 0.00%  Tick= 10003|  5053| 15436  CritTick= 20014|  9911| 30872|61.81%
-    infernal_armor                 Count=  42.4|  7.135sec  DPE=  8876| 0.35%  DPET=      0  DPR=      0  pDPS=  1255  Miss= 0.00%  Hit=  5693|  2595|  7927  Crit= 11402|  5190| 15855|55.76%
-    infernal_strike                Count=  39.1|  7.981sec  DPE= 59847| 2.17%  DPET=      0  DPR=      0  pDPS=  7783  Miss= 0.00%  Hit= 38501| 20190| 61680  Crit= 77128| 41158|121370|55.78%
-    leech                          Count= 316.6|  0.948sec  DPE=  4683|23.00%  DPET=      0  DPR=      0  pDPS=  4918  Miss= 0.00%  Hit=  4681|     0|172854
-    metamorphosis                  Count=   3.0|120.000sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    overwhelming_rage              Count=   4.1| 59.999sec  DPE=657388| 0.00%  DPET=      0  DPR=      0  pDPS=  8902  TickCount=    20  MissTick= 0.00%  Tick=135468| 86540|211051  UpTime= 19.70%
-    phantom_reaping                Count=  26.4| 11.133sec  DPE=146790| 3.12%  DPET=      0  DPR=      0  pDPS= 11177  Miss= 0.00%  Hit= 81538| 80636| 84668  Crit=163076|161272|169335|55.79%
-    phantom_reaping_echo           Count=  16.6| 11.523sec  DPE= 31410| 0.49%  DPET=      0  DPR=      0  pDPS=  1737  Miss= 0.00%  Hit= 20159| 20159| 20159  Crit= 40318| 40318| 40318|55.81%
-    potion                         Count=   1.5|301.362sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    queensbane                     Count=  17.6| 16.250sec  DPE= 71979| 1.18%  DPET=      0  DPR=      0  pDPS=  4219  TickCount=    70  MissTick= 0.00%  Tick= 11641| 11528| 12104  CritTick= 23282| 23055| 24208|55.87%  UpTime= 46.51%
-    ravenous_scarab                Count= 127.3|  2.306sec  DPE=  2835| 0.34%  DPET=      0  DPR=      0  pDPS=  1201  Miss= 0.00%  Hit=  1821|  1797|  1887  Crit=  3643|  3593|  3773|55.90%
-    ravenous_swarm                 Count=   5.3| 61.763sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    reavers_glaive                 Count=  17.0| 18.182sec  DPE=110011| 1.74%  DPET=      0  DPR=      0  pDPS=  6216  Miss= 0.00%  Hit= 70618| 69683| 75460  Crit=141317|139366|150920|55.81%
-    sigil_of_flame                 Count=  15.1| 21.925sec  DPE=817544|11.45%  DPET= 913919  DPR=      0  pDPS= 41087  Miss= 0.00%  Hit=108392| 56099|168611  Crit=215846|116512|337221|55.51%  TickCount=   140  MissTick= 0.00%  Tick= 45978|  6076|165004  CritTick= 92114| 12153|330008|55.83%  UpTime= 90.79%
-    sigil_of_spite                 Count=   6.0| 54.371sec  DPE=466652| 2.58%  DPET= 490128  DPR=      0  pDPS=  9244  Miss= 0.00%  Hit=299226|173152|336621  Crit=600364|346303|673242|56.03%
-    soul_carver                    Count=   5.4| 61.407sec  DPE=562594| 2.80%  DPET= 593548  DPR=      0  pDPS= 10025  Miss= 0.00%  Hit=237115|145048|280904  Crit=473095|284723|552906|55.72%  TickCount=    16  MissTick= 0.00%  Tick= 41661| 29727| 46146  CritTick= 83395| 60619| 92293|56.05%  UpTime=  5.31%
-    soul_carver_oh                 Count=   0.0|  0.000sec  DPE=     0| 0.92%  DPET=      0  DPR=      0  pDPS=  3292  Miss= 0.00%  Hit=118477| 71181|140452  Crit=236677|142362|276453|56.10%
-    soul_cleave                    Count= 141.3|  2.129sec  DPE=234731|30.79%  DPET= 245366  DPR=   7805  pDPS=110257  Miss= 0.00%  Hit=150590| 83448|246702  Crit=301302|163687|493404|55.83%
-    soul_cleave_heal               Count=   0.0|  0.000sec  DPE=     0|10.86%  DPET=      0  DPR=      0  pDPS=  2337  Miss= 0.00%  Hit=  3790|     0| 20799  Crit=  5874|     0| 41599|55.82%
-    spirit_bomb                    Count=  21.3| 13.567sec  DPE=402516| 7.96%  DPET= 434567  DPR=  10040  pDPS= 28588  Miss= 0.00%  Hit=258723| 55006|365386  Crit=517678|107975|730772|55.94%
-    the_hunt                       Count=   3.7| 91.025sec  DPE=982708| 3.40%  DPET=1057752  DPR=      0  pDPS= 12180  Miss= 0.00%  Hit=295048|208115|395260  Crit=585434|416230|790520|55.91%  TickCount=    19  MissTick= 0.00%  Tick= 64380| 30639| 74442  CritTick=128926| 60222|148884|55.88%  UpTime=  7.37%
-    warblades_hunger               Count=   0.0|  0.000sec  DPE=     0| 2.78%  DPET=      0  DPR=      0  pDPS=  9947  Miss= 0.00%  Hit= 22881|  9291| 30184  Crit= 45801| 18582| 60368|55.83%
-    wounded_quarry                 Count=   0.0|  0.000sec  DPE=     0| 2.95%  DPET=      0  DPR=      0  pDPS= 10566  Miss= 0.00%  Hit=  4207|  2834|  5482  Crit=  8413|  5667| 10964|55.81%
+    art_of_the_glaive              Count=   0.0|  0.000sec  DPE=     0| 1.72%  DPET=      0  DPR=      0  pDPS=  6173  Miss= 0.00%  Hit= 23544| 23228| 25153  Crit= 47098| 46455| 50307|55.75%
+    auto_attack_mh                 Count= 248.8|  1.399sec  DPE= 17710| 4.09%  DPET=  12724  DPR=      0  pDPS= 14687  Miss=16.36%  Hit= 12705| 11072| 15107  Crit= 25413| 22144| 30215|55.74%
+    auto_attack_oh                 Count= 241.1|  1.441sec  DPE=  8849| 1.98%  DPET=   6191  DPR=      0  pDPS=  7111  Miss=16.41%  Hit=  6348|  5536|  7554  Crit= 12698| 11072| 15107|55.79%
+    consume_soul_lesser            Count= 427.5|  0.693sec  DPE=  2688|18.24%  DPET=      0  DPR=      0  pDPS=  3835  Miss= 0.00%  Hit=  2688|     0| 75094
+    demon_spikes                   Count=  25.2| 12.370sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
+    disrupt                        Count=   2.5|108.532sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
+    felblade                       Count=   1.6| 91.663sec  DPE=112698| 0.17%  DPET= 223556  DPR=      0  pDPS=   608  Miss= 0.00%  Hit= 72303| 33470| 95285  Crit=144397| 66940|190569|56.03%
+    fiery_brand                    Count=   5.4| 60.383sec  DPE=865400| 1.38%  DPET= 912395  DPR=      0  pDPS=  4964  Miss= 0.00%  Hit=175309|104652|202673  Crit=350340|209304|405345|56.09%
+    fiery_brand_dot                Count=   0.0|  0.000sec  DPE=     0| 2.99%  DPET=      0  DPR=      0  pDPS= 10729  TickCount=   133  MissTick= 0.00%  Tick= 15475|  5659| 18589  CritTick= 30945| 11318| 37178|55.86%  UpTime= 44.11%
+    fracture                       Count=  83.5|  3.591sec  DPE= 92588| 7.17%  DPET=  97336  DPR=      0  pDPS= 25760  Miss= 0.00%  Hit= 29713| 18185| 39681  Crit= 59402| 36371| 79363|55.89%
+    frailty_heal                   Count= 299.3|  1.000sec  DPE= 10082|47.87%  DPET=      0  DPR=      0  pDPS= 10047  Miss= 0.00%  Hit= 10081|     0|520434
+    immolation_aura                Count=  30.2|  9.839sec  DPE=204104| 5.37%  DPET= 214184  DPR=      0  pDPS= 19275  Miss= 0.00%  Hit= 26592| 14052| 41338  Crit= 53164| 28104| 82675|61.53%  MissTick= 0.00%  Tick= 10024|  5053| 15436  CritTick= 20052| 10106| 31370|61.80%
+    infernal_armor                 Count=  43.2|  6.999sec  DPE=  8907| 0.36%  DPET=      0  DPR=      0  pDPS=  1283  Miss= 0.00%  Hit=  5710|  2595|  7927  Crit= 11429|  5390| 15855|55.90%
+    infernal_strike                Count=  39.0|  7.981sec  DPE= 59694| 2.16%  DPET=      0  DPR=      0  pDPS=  7763  Miss= 0.00%  Hit= 38403| 19802| 60685  Crit= 76818| 40381|123359|55.91%
+    leech                          Count= 315.9|  0.948sec  DPE=  4677|23.44%  DPET=      0  DPR=      0  pDPS=  4913  Miss= 0.00%  Hit=  4676|     0|169151
+    metamorphosis                  Count=   3.0|121.913sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
+    overwhelming_rage              Count=   4.0| 58.647sec  DPE=657662| 0.00%  DPET=      0  DPR=      0  pDPS=  8805  TickCount=    20  MissTick= 0.00%  Tick=135587| 86540|211051  UpTime= 19.49%
+    phantom_reaping                Count=  26.5| 11.124sec  DPE=146755| 3.12%  DPET=      0  DPR=      0  pDPS= 11220  Miss= 0.00%  Hit= 81524| 80636| 84668  Crit=163085|161272|169335|55.99%
+    phantom_reaping_echo           Count=  16.5| 11.840sec  DPE= 31311| 0.48%  DPET=      0  DPR=      0  pDPS=  1724  Miss= 0.00%  Hit= 20159| 20159| 20159  Crit= 40318| 40318| 40318|55.32%
+    potion                         Count=   1.5|301.255sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
+    queensbane                     Count=  17.6| 16.651sec  DPE= 72200| 1.18%  DPET=      0  DPR=      0  pDPS=  4231  TickCount=    70  MissTick= 0.00%  Tick= 11642| 11528| 12104  CritTick= 23285| 23055| 24208|55.90%  UpTime= 46.62%
+    ravenous_scarab                Count= 126.9|  2.306sec  DPE=  2839| 0.33%  DPET=      0  DPR=      0  pDPS=  1202  Miss= 0.00%  Hit=  1821|  1797|  1887  Crit=  3643|  3593|  3773|56.06%
+    ravenous_swarm                 Count=   5.3| 61.743sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
+    reavers_glaive                 Count=  16.8| 18.322sec  DPE=110216| 1.72%  DPET=      0  DPR=      0  pDPS=  6184  Miss= 0.00%  Hit= 70638| 69683| 75460  Crit=141289|139366|150920|56.08%
+    sigil_of_flame                 Count=  15.0| 21.930sec  DPE=818545|11.43%  DPET= 915279  DPR=      0  pDPS= 41116  Miss= 0.00%  Hit=109417| 56099|171375  Crit=217712|112197|348278|55.88%  TickCount=   141  MissTick= 0.00%  Tick= 46278|  6076|165004  CritTick= 92448| 12153|330008|55.99%  UpTime= 91.16%
+    sigil_of_spite                 Count=   6.0| 54.082sec  DPE=456934| 2.54%  DPET= 479792  DPR=      0  pDPS=  9125  Miss= 0.00%  Hit=294295|179811|342710  Crit=586868|359623|685421|56.09%
+    soul_carver                    Count=   5.3| 61.335sec  DPE=564927| 2.79%  DPET= 596267  DPR=      0  pDPS= 10007  Miss= 0.00%  Hit=236734|142362|281220  Crit=473834|290096|562439|56.50%  TickCount=    16  MissTick= 0.00%  Tick= 41712| 29727| 46772  CritTick= 83423| 59453| 93779|56.06%  UpTime=  5.28%
+    soul_carver_oh                 Count=   0.0|  0.000sec  DPE=     0| 0.91%  DPET=      0  DPR=      0  pDPS=  3280  Miss= 0.00%  Hit=118322| 72524|140610  Crit=236987|142362|281220|56.29%
+    soul_cleave                    Count= 143.4|  2.093sec  DPE=234004|31.15%  DPET= 244436  DPR=   7781  pDPS=111781  Miss= 0.00%  Hit=150208| 81843|250813  Crit=300278|163687|501627|55.84%
+    soul_cleave_heal               Count=   0.0|  0.000sec  DPE=     0|10.46%  DPET=      0  DPR=      0  pDPS=  2199  Miss= 0.00%  Hit=  3492|     0| 20799  Crit=  5465|     0| 41599|55.89%
+    spirit_bomb                    Count=  21.2| 13.751sec  DPE=402094| 7.91%  DPET= 435774  DPR=  10029  pDPS= 28456  Miss= 0.00%  Hit=258432| 55006|365386  Crit=516273|110012|730772|56.10%
+    the_hunt                       Count=   3.7| 91.151sec  DPE=985914| 3.40%  DPET=1061154  DPR=      0  pDPS= 12238  Miss= 0.00%  Hit=295721|208115|395260  Crit=588041|412266|790520|56.53%  TickCount=    19  MissTick= 0.00%  Tick= 64324| 30639| 74442  CritTick=128930| 60222|148884|56.09%  UpTime=  7.37%
+    warblades_hunger               Count=   0.0|  0.000sec  DPE=     0| 2.70%  DPET=      0  DPR=      0  pDPS=  9691  Miss= 0.00%  Hit= 22993|  9291| 30184  Crit= 45966| 18582| 60368|55.81%
+    wounded_quarry                 Count=   0.0|  0.000sec  DPE=     0| 2.94%  DPET=      0  DPR=      0  pDPS= 10545  Miss= 0.00%  Hit=  4210|  2889|  5570  Crit=  8423|  5778| 11141|55.79%
 
   Constant Buffs:
     arcane_intellect/battle_shout/draconic_augmentation/feisty_fish_sticks/iced_phial_of_corrupting_rage/mark_of_the_wild/power_word_fortitude
     windfury_totem
   Dynamic Buffs:
-    art_of_the_glaive                  : start= 14.5 refresh=419.7 interval= 21.1 trigger=  0.7 duration= 18.9 uptime= 91.22%
-    bloodlust                          : start=  1.0 refresh=  0.0 interval=  0.0 trigger=  0.0 duration= 40.0 uptime= 13.48%
-    corrupting_rage                    : start=  4.9 refresh=  0.0 interval= 62.2 trigger= 58.7 duration= 50.2 uptime= 80.19%
-    demon_spikes                       : start= 25.3 refresh=  0.0 interval= 12.1 trigger= 12.4 duration=  5.9 uptime= 50.05%  benefit= 49.79%
-    demonsurge_consuming_fire          : start=  3.0 refresh=  0.0 interval=120.0 trigger=120.0 duration= 14.7 uptime= 14.81%
-    demonsurge_fel_desolation          : start=  3.0 refresh=  0.0 interval=120.0 trigger=120.0 duration= 14.7 uptime= 14.81%
-    demonsurge_sigil_of_doom           : start=  3.0 refresh=  0.0 interval=120.0 trigger=120.0 duration= 14.7 uptime= 14.81%
-    demonsurge_soul_sunder             : start=  3.0 refresh=  0.0 interval=120.0 trigger=120.0 duration= 14.7 uptime= 14.81%
-    demonsurge_spirit_burst            : start=  3.0 refresh=  0.0 interval=120.0 trigger=120.0 duration= 14.7 uptime= 14.81%
-    elemental_potion_of_ultimate_power : start=  1.5 refresh=  0.0 interval=301.3 trigger=301.3 duration= 27.4 uptime= 13.23%
-    glaive_flurry                      : start= 17.0 refresh=  0.0 interval= 18.2 trigger= 18.2 duration=  1.6 uptime=  0.03%  benefit= 10.76%
-    immolation_aura                    : start= 31.3 refresh=  0.0 interval= 13.5 trigger=  9.8 duration= 10.3 uptime= 90.27%
-    immolation_aura1                   : start= 28.4 refresh=  0.0 interval= 10.8 trigger= 10.6 duration=  8.9 uptime= 83.54%
-    immolation_aura2                   : start=  3.0 refresh=  0.0 interval= 15.3 trigger= 15.3 duration=  9.0 uptime=  9.01%
-    metamorphosis                      : start=  3.0 refresh=  0.0 interval=120.0 trigger=120.0 duration= 14.7 uptime= 14.81%
-    ravenous_scarab                    : start= 26.0 refresh=100.9 interval= 11.5 trigger=  2.3 duration=  4.0 uptime= 34.56%
-    ravenous_swarm                     : start=  5.3 refresh=  0.0 interval= 61.8 trigger= 61.8 duration=  3.0 uptime=  5.31%
-    reavers_glaive                     : start= 17.4 refresh= 10.0 interval= 17.7 trigger= 11.0 duration=  5.9 uptime= 34.03%  benefit= 36.56%
-    rending_strike                     : start= 17.0 refresh=  0.0 interval= 18.2 trigger= 18.2 duration=  1.0 uptime=  5.46%  benefit= 32.67%
-    soul_fragments                     : start= 58.7 refresh=377.9 interval=  5.0 trigger=  0.7 duration=  4.2 uptime= 81.24%
-    soul_furnace_damage_amp            : start= 42.6 refresh=  0.4 interval=  7.0 trigger=  6.9 duration=  1.5 uptime= 21.02%  benefit= 30.20%
-    soul_furnace_stack                 : start= 43.9 refresh=390.4 interval=  6.8 trigger=  0.7 duration=  6.1 uptime= 89.05%
-    soulfuse                           : start=  1.0 refresh=433.3 interval=  0.0 trigger=  0.7 duration=297.2 uptime= 98.81%
-    thrill_of_the_fight_attack_speed   : start=  2.3 refresh= 14.6 interval= 88.2 trigger= 18.2 duration=126.2 uptime= 98.31%
-    thrill_of_the_fight_damage         : start= 16.9 refresh=  0.0 interval= 18.2 trigger= 18.2 duration=  9.8 uptime= 55.25%  benefit= 55.49%
-    warblades_hunger                   : start= 84.5 refresh=349.7 interval=  3.5 trigger=  0.7 duration=  2.4 uptime= 67.46%  benefit= 96.62%
+    art_of_the_glaive                  : start= 14.4 refresh=414.0 interval= 21.4 trigger=  0.7 duration= 19.1 uptime= 91.23%
+    bloodlust                          : start=  1.0 refresh=  0.0 interval=  0.0 trigger=  0.0 duration= 40.0 uptime= 13.51%
+    corrupting_rage                    : start=  4.8 refresh=  0.0 interval= 62.5 trigger= 58.8 duration= 50.7 uptime= 80.42%
+    demon_spikes                       : start= 25.2 refresh=  0.0 interval= 12.1 trigger= 12.4 duration=  5.9 uptime= 50.07%  benefit= 50.21%
+    demonsurge_consuming_fire          : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
+    demonsurge_fel_desolation          : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
+    demonsurge_sigil_of_doom           : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
+    demonsurge_soul_sunder             : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
+    demonsurge_spirit_burst            : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
+    elemental_potion_of_ultimate_power : start=  1.5 refresh=  0.0 interval=301.2 trigger=301.2 duration= 27.5 uptime= 13.24%
+    glaive_flurry                      : start= 16.8 refresh=  0.0 interval= 18.3 trigger= 18.3 duration=  0.8 uptime=  0.03%  benefit= 10.52%
+    immolation_aura                    : start= 31.2 refresh=  0.0 interval= 13.5 trigger=  9.8 duration= 10.3 uptime= 90.03%
+    immolation_aura1                   : start= 28.3 refresh=  0.0 interval= 10.8 trigger= 10.7 duration=  8.9 uptime= 83.32%
+    immolation_aura2                   : start=  3.0 refresh=  0.0 interval= 15.3 trigger= 15.3 duration=  9.0 uptime=  8.98%
+    metamorphosis                      : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
+    ravenous_scarab                    : start= 25.8 refresh=100.8 interval= 11.6 trigger=  2.3 duration=  4.0 uptime= 34.50%
+    ravenous_swarm                     : start=  5.3 refresh=  0.0 interval= 61.7 trigger= 61.7 duration=  3.0 uptime=  5.31%
+    reavers_glaive                     : start= 17.2 refresh=  9.6 interval= 17.8 trigger= 11.2 duration=  5.7 uptime= 32.28%  benefit= 34.71%
+    rending_strike                     : start= 16.8 refresh=  0.0 interval= 18.3 trigger= 18.3 duration=  1.0 uptime=  5.43%  benefit= 33.52%
+    soul_fragments                     : start= 60.9 refresh=369.8 interval=  4.8 trigger=  0.7 duration=  3.9 uptime= 80.02%
+    soul_furnace_damage_amp            : start= 42.1 refresh=  0.3 interval=  7.1 trigger=  7.0 duration=  1.5 uptime= 20.69%  benefit= 29.25%
+    soul_furnace_stack                 : start= 43.3 refresh=385.1 interval=  6.9 trigger=  0.7 duration=  6.2 uptime= 89.15%
+    soulfuse                           : start=  1.0 refresh=427.4 interval=  0.0 trigger=  0.7 duration=296.6 uptime= 98.79%
+    thrill_of_the_fight_attack_speed   : start=  2.7 refresh= 14.0 interval= 78.5 trigger= 18.4 duration=107.8 uptime= 98.00%
+    thrill_of_the_fight_damage         : start= 16.7 refresh=  0.0 interval= 18.4 trigger= 18.4 duration=  9.8 uptime= 54.82%  benefit= 55.07%
+    warblades_hunger                   : start= 81.9 refresh=346.5 interval=  3.6 trigger=  0.7 duration=  2.5 uptime= 68.07%  benefit= 97.26%
   Up-Times:
-      4.82% : Fury Cap                      
+      2.92% : Fury Cap                      
   Procs:
-     34.35307 |   8.56525sec : Windfury (Main Hand)
-     33.18464 |   8.83623sec : Windfury (Off Hand)
-     19.64953 |  14.67101sec : parry_haste
-      3.72795 |  90.97238sec : delayed_aa_cast
-    437.69494 |   0.87736sec : soul_fragment_lesser
-     13.89658 |  20.66984sec : felblade_reset
-     78.78236 |   3.74051sec : soul_fragment_overflow
-    173.48610 |   1.72296sec : soul_fragment_from_fracture
-     17.82657 |  54.38182sec : soul_fragment_from_sigil_of_spite
-     18.13363 |  16.10803sec : soul_fragment_from_fallout
-     11.02240 |  24.76660sec : soul_fragment_from_meta
-     16.93779 |  18.20783sec : soul_fragment_from_aldrachi_tactics
-     48.51830 |   6.16596sec : soul_fragment_from_wounded_quarry
-     98.78896 |   5.97033sec : soul_fragment_from_vengeance_twws1_2pc
+     34.43589 |   8.52469sec : Windfury (Main Hand)
+     33.06941 |   8.84751sec : Windfury (Off Hand)
+     19.67493 |  14.61533sec : parry_haste
+      3.72615 |  91.12567sec : delayed_aa_cast
+    431.77295 |   0.89257sec : soul_fragment_lesser
+     13.71414 |  20.94328sec : felblade_reset
+     74.29006 |   3.95123sec : soul_fragment_overflow
+    166.88658 |   1.78691sec : soul_fragment_from_fracture
+     17.92739 |  54.08873sec : soul_fragment_from_sigil_of_spite
+     18.08842 |  16.10250sec : soul_fragment_from_fallout
+     10.69534 |  25.55968sec : soul_fragment_from_meta
+     16.78456 |  18.35141sec : soul_fragment_from_aldrachi_tactics
+     48.29266 |   6.18332sec : soul_fragment_from_wounded_quarry
+    100.33767 |   5.84534sec : soul_fragment_from_vengeance_twws1_2pc
   Gains:
-    1344326.6 : consume_soul_lesser   (health)         (overflow=92.34%)
-         0.9 : felblade              (fury)         
-      2370.5 : fracture              (fury)         
-    2918981.1 : frailty_heal          (health)         (overflow=95.50%)
-       240.6 : immolation_aura       (fury)           (overflow=4.05%)
-       529.3 : immolation_aura_tick  (fury)           (overflow=4.71%)
-    1481865.0 : leech                 (health)         (overflow=87.55%)
-       321.5 : reavers_glaive        (fury)           (overflow=5.42%)
-       388.4 : sigil_of_flame        (fury)           (overflow=14.13%)
-        26.2 : sigil_of_flame_damage (fury)           (overflow=12.94%)
-    699740.8 : soul_cleave_heal      (health)         (overflow=84.30%)
-      1309.9 : volatile_flameblood   (fury)           (overflow=4.50%)
+    1149145.3 : consume_soul_lesser   (health)         (overflow=93.36%)
+        64.4 : felblade              (fury)         
+      2289.9 : fracture              (fury)         
+    3016953.2 : frailty_heal          (health)         (overflow=95.42%)
+       243.8 : immolation_aura       (fury)           (overflow=2.33%)
+       537.3 : immolation_aura_tick  (fury)           (overflow=2.81%)
+    1477309.5 : leech                 (health)         (overflow=87.58%)
+       329.0 : reavers_glaive        (fury)           (overflow=2.31%)
+       416.5 : sigil_of_flame        (fury)           (overflow=7.69%)
+        26.9 : sigil_of_flame_damage (fury)           (overflow=10.19%)
+    658823.9 : soul_cleave_heal      (health)         (overflow=85.45%)
+      1328.9 : volatile_flameblood   (fury)           (overflow=2.70%)
   Waiting:  0.00%
 
 
  *** Targets *** 
 
 Target: Fluffy_Pillow humanoid tank_dummy unknown 73
-  DPS=28676.844272803744 DPS-Error=0/0.00% DPS-Range=5448.693064764237/19.00%
-  DTPS=358370.0356622365 DTPS-Error=187.92961999418327/0.05% DTPS-Range=23232.987928749644/6.48%
-  DPR=0.08575007824845582 RPS-Out=334461.6955799457 RPS-In=0 Resource=health Waiting=46.4712046887847 ApM=3.3703706137383125
-  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|102897055  mana=0|0
+  DPS=28465.032421797085 DPS-Error=0/0.00% DPS-Range=5910.596859005993/20.76%
+  DTPS=359150.9765462465 DTPS-Error=188.09514942875109/0.05% DTPS-Range=23913.281418898463/6.66%
+  DPR=0.08529817227701655 RPS-Out=333804.7222148115 RPS-In=0 Resource=health Waiting=46.48867614078414 ApM=3.3717650625695876
+  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|121014034  mana=0|0
   Generic Stats: mastery=0.00%|0.00%(0)  versatility=0.00%|0.00%(0)  leech=0.00%|0.00%(0)  runspeed=7.00%|7.00%(0)
   Spell Stats:   power=0|0(0)  hit=0.00%|0.00%(0)  crit=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%  manareg=0|0(0)
   Attack Stats:  power=0|0(0)  hit=0.00%|0.00%(0)  crit=5.00%|5.00%(0)  expertise=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%
@@ -187,38 +188,38 @@ Target: Fluffy_Pillow humanoid tank_dummy unknown 73
     spell_dot,damage=60000,range=1200,tick_time=2,cooldown=60,aoe_tanks=1,dot_duration=60,bleed=1
     pause_action,duration=30,cooldown=30,if=time>=30
   Actions:
-    melee_main_hand_1T_5min  Count=  77.7|  3.751sec  DPE= 41238|37.15%  DPET= 20619  DPR=  0  pDPS=10651  Miss= 0.00%  Hit= 88870| 29731|219057  Dodge=21.90%  Parry=31.70%
-    melee_nuke_1T_5min       Count=   5.5| 59.566sec  DPE=282729|17.94%  DPET=141058  DPR=  0  pDPS= 5158  Miss= 0.00%  Hit=282725|147065|417297
+    melee_main_hand_1T_5min  Count=  77.6|  3.746sec  DPE= 41034|37.25%  DPET= 20517  DPR=  0  pDPS=10596  Miss= 0.00%  Hit= 88118| 29734|218502  Dodge=21.70%  Parry=31.73%
+    melee_nuke_1T_5min       Count=   5.5| 59.565sec  DPE=278517|17.82%  DPET=138953  DPR=  0  pDPS= 5085  Miss= 0.00%  Hit=278520|147065|405340
     pause_action             Count=   4.5| 60.013sec  DPE=     0| 0.00%  DPET=     0  DPR=  0  pDPS=    0
-    spell_dot_1T_5min        Count=   5.4| 61.013sec  DPE=723601|44.90%  DPET=720487  DPR=  0  pDPS=12868  TickCount=   145  MissTick= 0.00%  Tick= 26679|  7467| 51851  UpTime= 96.54%
-    tank_heal                Count= 602.1|  0.500sec  DPE=     0| 0.00%  DPET=     0  DPR=  0  pDPS=    0
+    spell_dot_1T_5min        Count=   5.3| 61.013sec  DPE=718878|44.93%  DPET=715752  DPR=  0  pDPS=12783  TickCount=   145  MissTick= 0.00%  Tick= 26504|  7467| 49777  UpTime= 96.54%
+    tank_heal                Count= 600.8|  0.500sec  DPE=     0| 0.00%  DPET=     0  DPR=  0  pDPS=    0
 
   Constant Buffs:
     arcane_intellect/battle_shout/bleeding/chaos_brand/hunters_mark/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude
   Dynamic Buffs:
-    frailty        : start=162.3 refresh=  0.0 interval=135.8 trigger=  1.9 duration=262.2 uptime= 99.72%  benefit= 99.83%
-    reavers_mark   : start= 16.9 refresh=  0.0 interval= 18.2 trigger= 18.2 duration= 17.5 uptime= 98.55%  benefit= 98.94%
-    sigil_of_flame : start= 15.0 refresh=  0.0 interval= 25.7 trigger= 20.6 duration= 22.8 uptime= 90.00%  benefit= 85.07%
+    frailty        : start=164.4 refresh=  0.0 interval=134.1 trigger=  1.8 duration=256.4 uptime= 99.72%  benefit= 99.83%
+    reavers_mark   : start= 16.8 refresh=  0.0 interval= 18.4 trigger= 18.4 duration= 17.6 uptime= 98.23%  benefit= 98.64%
+    sigil_of_flame : start= 15.0 refresh=  0.0 interval= 26.5 trigger= 20.6 duration= 23.7 uptime= 89.86%  benefit= 84.50%
   Procs:
-      5.01220 |  60.01350sec : delayed_aa_cast
-  Waiting: 46.47%
+      5.00840 |  60.01351sec : delayed_aa_cast
+  Waiting: 46.49%
 
 
 Baseline Performance:
   Networking    = enabled
   RNG Engine    = xoshiro256+
-  Iterations    = 5011 (405, 413, 424, 455, 416, 373, 417, 457, 388, 421, 395, 447)
-  TotalEvents   = 75122945
-  MaxEventQueue = 147
-  TargetHealth  = 102897056
-  SimSeconds    = 1503591.320
-  CpuSeconds    = 21.335042
-  WallSeconds   = 2.1057272080000002
-  InitSeconds   = 0.005896417
-  MergeSeconds  = 0.001630209
-  AnalyzeSeconds= 0.024644250000000003
-  SpeedUp       = 70644
-  EndTime       = 2024-06-30 20:34:57-0700 (1719804897)
+  Iterations    = 5011 (390, 407, 433, 391, 416, 421, 398, 443, 425, 421, 444, 422)
+  TotalEvents   = 74932873
+  MaxEventQueue = 145
+  TargetHealth  = 121014035
+  SimSeconds    = 1500513.798
+  CpuSeconds    = 21.677368
+  WallSeconds   = 2.0202705
+  InitSeconds   = 0.005273708
+  MergeSeconds  = 0.0017342100000000001
+  AnalyzeSeconds= 0.024679250000000003
+  SpeedUp       = 69386
+  EndTime       = 2024-06-30 22:07:38-0700 (1719810458)
 
 
 Waiting:
