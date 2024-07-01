@@ -2,28 +2,28 @@
 # support for not having fiery demise
 
 # Soul fragment thresholds with Fiery Demise active
-$(1t_spbomb_souls_fd)=5
-$(1t_spburst_souls_fd)=4
+$(st_spbomb_souls_fd)=5
+$(st_spburst_souls_fd)=4
 $(small_aoe_spbomb_souls_fd)=4
 $(small_aoe_spburst_souls_fd)=4
 $(big_aoe_spbomb_souls_fd)=3
 $(big_aoe_spburst_souls_fd)=3
 
 # Soul fragment thresholds without Fiery Demise active
-$(1t_spbomb_souls)=5
-$(1t_spburst_souls)=5
+$(st_spbomb_souls)=5
+$(st_spburst_souls)=5
 $(small_aoe_spbomb_souls)=4
 $(small_aoe_spburst_souls)=4
 $(big_aoe_spbomb_souls)=4
 $(big_aoe_spburst_souls)=3
 
 # Spirit Bomb conditions
-actions.fs+=/variable,name=spbomb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(1t_spbomb_souls_fd))+(variable.small_aoe*$(small_aoe_spbomb_souls_fd))+(variable.big_aoe*$(big_aoe_spbomb_souls_fd)),value_else=(variable.single_target*$(1t_spbomb_souls))+(variable.small_aoe*$(small_aoe_spbomb_souls))+(variable.big_aoe*$(big_aoe_spbomb_souls))
+actions.fs+=/variable,name=spbomb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(st_spbomb_souls_fd))+(variable.small_aoe*$(small_aoe_spbomb_souls_fd))+(variable.big_aoe*$(big_aoe_spbomb_souls_fd)),value_else=(variable.single_target*$(st_spbomb_souls))+(variable.small_aoe*$(small_aoe_spbomb_souls))+(variable.big_aoe*$(big_aoe_spbomb_souls))
 actions.fs+=/variable,name=can_spbomb,value=soul_fragments>=variable.spbomb_threshold
 actions.fs+=/variable,name=can_spbomb_soon,value=soul_fragments.total>=variable.spbomb_threshold
 
 # Spirit Burst conditions
-actions.fs+=/variable,name=spburst_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(1t_spburst_souls_fd))+(variable.small_aoe*$(small_aoe_spburst_souls_fd))+(variable.big_aoe*$(big_aoe_spburst_souls_fd)),value_else=(variable.single_target*$(1t_spburst_souls))+(variable.small_aoe*$(small_aoe_spburst_souls))+(variable.big_aoe*$(big_aoe_spburst_souls))
+actions.fs+=/variable,name=spburst_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(st_spburst_souls_fd))+(variable.small_aoe*$(small_aoe_spburst_souls_fd))+(variable.big_aoe*$(big_aoe_spburst_souls_fd)),value_else=(variable.single_target*$(st_spburst_souls))+(variable.small_aoe*$(small_aoe_spburst_souls))+(variable.big_aoe*$(big_aoe_spburst_souls))
 actions.fs+=/variable,name=can_spburst,value=soul_fragments>=variable.spburst_threshold
 actions.fs+=/variable,name=can_spburst_soon,value=soul_fragments.total>=variable.spburst_threshold
 

@@ -1,4 +1,5 @@
 # Generic pre-combat actions
+# TODO -- ADD RACIALS
 actions.precombat=flask
 actions.precombat+=/augmentation
 actions.precombat+=/food
@@ -18,6 +19,7 @@ actions.precombat+=/immolation_aura
 
 # Generic actions for both hero trees
 actions+=/auto_attack
+actions+=/retarget_auto_attack,line_cd=1,target_if=min:debuff.reavers_mark.remains,if=hero_tree.aldrachi_reaver
 actions+=/disrupt,if=target.debuff.casting.react
 actions+=/infernal_strike,use_off_gcd=1
 actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains

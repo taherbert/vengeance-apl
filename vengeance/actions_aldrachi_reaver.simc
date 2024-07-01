@@ -1,22 +1,25 @@
+# enhance cleave if target time to die is less than 10s
 # Soul fragment thresholds with Fiery Demise active
-$(1t_spb_souls_fd)=5
+
+$(st_spb_souls_fd)=5
 $(small_aoe_spb_souls_fd)=4
 $(big_aoe_spb_souls_fd)=3
 
 # Soul fragment thresholds without Fiery Demise active
-$(1t_spb_souls)=100
+$(st_spb_souls)=100
 $(small_aoe_spb_souls)=4
 $(big_aoe_spb_souls)=4
 
 # Spirit Bomb conditions
-actions.ar+=/variable,name=spb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(1t_spb_souls_fd))+(variable.small_aoe*$(small_aoe_spb_souls_fd))+(variable.big_aoe*$(big_aoe_spb_souls_fd)),value_else=(variable.single_target*$(1t_spb_souls))+(variable.small_aoe*$(small_aoe_spb_souls))+(variable.big_aoe*$(big_aoe_spb_souls))
+actions.ar+=/variable,name=spb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*$(st_spb_souls_fd))+(variable.small_aoe*$(small_aoe_spb_souls_fd))+(variable.big_aoe*$(big_aoe_spb_souls_fd)),value_else=(variable.single_target*$(st_spb_souls))+(variable.small_aoe*$(small_aoe_spb_souls))+(variable.big_aoe*$(big_aoe_spb_souls))
 actions.ar+=/variable,name=can_spb,value=soul_fragments>=variable.spb_threshold
 actions.ar+=/variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb_threshold
-actions.fs+=/variable,name=dont_soul_cleave,value=(!variable.can_spb&variable.can_spb_soon)
+actions.ar+=/variable,name=can_spb_one_gcd,value=(soul_fragments.total+2)>=variable.spb_threshold
+actions.fs+=/variable,name=dont_soul_cleave,value=variable.can_spb|!variable.can_spb&(variable.can_spb_soon|variable.can_spb_one_gcd)
 
-# Which target and soul counts should we spirit bomb at?
-# actions.ar+=/variable,name=can_spb,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target&soul_fragments>=5)|(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=3),value_else=(variable.small_aoe&soul_fragments>=4)|(variable.big_aoe&soul_fragments>=4)
+# TODO: BE CONSISTENT ABOUT AR VS. MAIN
 # Reaver's Glaive is active and ready to be cast
+# TODO: USE THIS OR DONT USE THIS BUT BE CONSISTENT
 actions.ar+=/variable,name=rg_ready,value=buff.reavers_glaive.up
 # At least one of Reaver's Glaive's buffs are active and ready to be cast
 actions.ar+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up
@@ -30,21 +33,27 @@ actions.ar+=/call_action_list,name=rg_active,if=variable.rg_active
 actions.ar+=/call_action_list,name=main
 
 # Reaver's Glaive buffs are active, use them in the order that the variable rg_enhance_cleave dictates
+
+actions.rg_active+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(buff.rending_strike.up&!buff.glaive_flurry.up)
+# send the hunt before the rest of rg_active if doing so does not cause reavers mark to fall off -- this is to get more uptime on the hunt
+actions.rg_active+=/the_hunt,if=!buff.reavers_glaive.up&(debuff.reavers_mark.remains>($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max))
 actions.rg_active+=/fracture,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
 actions.rg_active+=/shear,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
 actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up|variable.rg_enhance_cleave&!buff.rending_strike.up
 
 # Main action list
-actions.main+=/soul_cleave,if=buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28
-actions.main+=/spirit_bomb,if=buff.art_of_the_glaive.stack+soul_fragments>=30
-actions.main+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(debuff.reavers_mark.up|(buff.rending_strike.up&!buff.glaive_flurry.up))
-actions.main+=/the_hunt,if=!(buff.reavers_glaive.up|buff.art_of_the_glaive.stack>=25)
+# TODO - abstract "reavers mark will end by the time we need to cast this" for the first half of this below
+# TODO -- can we simplify some of the logic below?
+actions.main+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up
+actions.main+=/soul_cleave,if=(debuff.reavers_mark.remains<($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
+actions.main+=/spirit_bomb,if=(debuff.reavers_mark.remains<($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
 # We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
-actions.main+=/reavers_glaive,if=(buff.reavers_glaive.up&buff.art_of_the_glaive.stack>=28)|debuff.reavers_mark.remains<=(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|action.shear.execute_time)+gcd.max+gcd.max)
-actions.main+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=(execute_time+gcd.remains)
+actions.main+=/reavers_glaive,if=(buff.reavers_glaive.up&buff.art_of_the_glaive.stack>=28)|(debuff.reavers_mark.remains<=(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max*2))|cooldown.the_hunt.remains<($(this_action)+gcd.max*2)
+actions.main+=/the_hunt,if=!buff.reavers_glaive.up
+actions.main+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=$(this_action)
 actions.main+=/immolation_aura
 actions.main+=/sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!in_flight)
-actions.main+=/soul_carver
+actions.main+=/soul_carver,if=((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
 actions.main+=/sigil_of_spite
 actions.main+=/bulk_extraction,if=spell_targets>=3
 actions.main+=/spirit_bomb,if=variable.can_spb
