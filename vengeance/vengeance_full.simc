@@ -1,13 +1,14 @@
 # SimC configuration
-optimal_raid=1
 target_error=0.05
 iterations=1000
 report_details=1
 single_actor_batch=1
 optimize_expressions=1
+html=/Users/tom/Documents/GitHub/APL/report.html
+output=/Users/tom/Documents/GitHub/APL/log.txt
 
 # Character configuration
-demonhunter="10T_60sec"
+demonhunter="Base"
 source=default
 spec=vengeance
 level=70
@@ -15,9 +16,13 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMbjBjtZMjZMDzMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
-desired_targets=1
-max_time=300
+talents=
+desired_targets=5
+max_time=60
+
+# Buff configuration
+optimal_raid=1
+# override.bloodlust=0
 
 # Default consumables
 potion=elemental_potion_of_ultimate_power_3
@@ -25,6 +30,7 @@ flask=iced_phial_of_corrupting_rage_3
 food=feisty_fish_sticks
 augmentation=draconic
 temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
+
 
 # Default gear
 head=impalers_of_the_hypogeal_nemesis,id=212065
@@ -232,3 +238,7 @@ actions.fs+=/fracture,if=variable.can_spbomb_one_gcd&soul_fragments.total>=2
 actions.fs+=/soul_cleave,if=!variable.dont_soul_cleave
 actions.fs+=/fracture
 actions.fs+=/throw_glaive
+
+
+# input=/Users/tom/Documents/GitHub/APL/vengeance/profile_templates.simc
+# input=/Users/tom/Documents/GitHub/APL/vengeance/manual_profiles.simc

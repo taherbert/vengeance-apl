@@ -29,4 +29,4 @@ def combine_files(main_file, output_file):
         outfile.writelines(combined_content)
 
 # Usage
-combine_files('vengeance/vengeance.simc', 'vengeance/vengeance_full.simc')
+combine_files('vengeance/character.simc', 'vengeance_full.simc')
