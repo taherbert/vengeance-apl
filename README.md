@@ -13,7 +13,9 @@ This script generates and runs SimulationCraft profiles for World of Warcraft ch
 - `character.simc` and `profile_templates.simc` files for your character/spec
 
 ## Usage
-```python generate_sims.py --simc <path_to_simc> --folder <path_to_simc_files> [options]```
+```
+python generate_sims.py --simc <path_to_simc> --folder <path_to_simc_files> [options]
+```
 
 ### Required Arguments
 - `--simc`: Path to the SimulationCraft executable
@@ -28,13 +30,22 @@ This script generates and runs SimulationCraft profiles for World of Warcraft ch
 
 ## Examples
 Run all talent combinations:
-```python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files```
+
+```
+python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files
+```
 
 Run specific talent combinations:
-```python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --hero "spb dgb" --class "fot" --spec "fb"```
+
+```
+python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --hero "spb dgb" --class "fot" --spec "fb"
+```
 
 Change fight parameters:
-```python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --targets 3 --time 180```
+
+```
+python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --targets 3 --time 180
+```
 
 ## Output
 The script generates an HTML file with simulation results in the current directory. The filename includes a timestamp and the simulation parameters.
