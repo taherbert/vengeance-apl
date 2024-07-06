@@ -43,11 +43,14 @@ def parse_profiles_simc(profiles_path):
     return {k: sorted(v) for k, v in talents.items()}
 
 def generate_simc_profile(params):
+    # Replace underscores with spaces in each parameter
+    formatted_params = {k: v.replace('_', ' ') for k, v in params.items()}
+    formatted_name = f"[{formatted_params['hero']}] ({formatted_params['class']}) - {formatted_params['spec']}"
     return "\n".join([
-        f'profileset."{params["name"]}"=talents=',
-        f'profileset."{params["name"]}"+="hero_talents=$({params["hero"]})"',
-        f'profileset."{params["name"]}"+="class_talents=$({params["class"]})"',
-        f'profileset."{params["name"]}"+="spec_talents=$({params["spec"]})"'
+        f'profileset."{formatted_name}"=talents=',
+        f'profileset."{formatted_name}"+="hero_talents=$({params["hero"]})"',
+        f'profileset."{formatted_name}"+="class_talents=$({params["class"]})"',
+        f'profileset."{formatted_name}"+="spec_talents=$({params["spec"]})"'
     ])
 
 def create_simc_file(character_content, profiles_content, profiles):
@@ -93,8 +96,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate and run SimulationCraft profiles')
     parser.add_argument('--simc', required=True, help='Path to SimulationCraft executable')
     parser.add_argument('--folder', required=True, help='Path to folder containing character.simc and profile_templates.simc')
-    parser.add_argument('--targets', type=int, default=1, help='Number of targets')
-    parser.add_argument('--time', type=int, default=300, help='Fight duration in seconds')
+    parser.add_argument('--targets', type=int, default=None, help='Number of targets')
+    parser.add_argument('--time', type=int, default=None, help='Fight duration in seconds')
     parser.add_argument('--hero', nargs='*', default=['all'], help='Hero talents to include')
     parser.add_argument('--class', dest='class_talents', nargs='*', default=['all'], help='Class talents to include')
     parser.add_argument('--spec', nargs='*', default=['all'], help='Spec talents to include')
@@ -111,14 +114,22 @@ def filter_talents(all_talents, include_list):
     if 'all' in include_list:
         return all_talents
     include_terms = [term.lower() for item in include_list for term in item.split()]
-    return [t for t in all_talents if any(inc in t.lower() for inc in include_terms)]
+    return [t for t in all_talents if all(inc in t.lower() for inc in include_terms)]
 
-def generate_output_filename(args):
+def generate_output_filename(args, character_content):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     hero = '_'.join(args.hero) if args.hero != ['all'] else 'all'
     class_talent = '_'.join(args.class_talents) if args.class_talents != ['all'] else 'all'
     spec = '_'.join(args.spec) if args.spec != ['all'] else 'all'
-    return f"simc_result_{timestamp}_targets{args.targets}_time{args.time}_{hero}_{class_talent}_{spec}.html"
+
+    # Extract actual targets and time values from updated character_content
+    targets = re.search(r'desired_targets=(\d+)', character_content)
+    time = re.search(r'max_time=(\d+)', character_content)
+
+    targets = targets.group(1) if targets else 'default'
+    time = time.group(1) if time else 'default'
+
+    return f"simc_result_{timestamp}_targets{targets}_time{time}_{hero}_{class_talent}_{spec}.html"
 
 def print_summary(talents, filtered_talents, profiles):
     print("\nSimulation Summary:")
@@ -136,6 +147,13 @@ def print_summary(talents, filtered_talents, profiles):
 
     print(f"\nTotal Profilesets Generated: {len(profiles)}")
 
+def update_character_simc(content, args):
+    if args.targets is not None:
+        content = re.sub(r'desired_targets=\d+', f'desired_targets={args.targets}', content)
+    if args.time is not None:
+        content = re.sub(r'max_time=\d+', f'max_time={args.time}', content)
+    return content
+
 def main(args):
     # Find and validate character.simc and profile_templates.simc
     character_file, profiles_file = find_simc_files(args.folder)
@@ -149,6 +167,9 @@ def main(args):
 
     with open(character_file, 'r') as f:
         character_content = f.read()
+
+    # Update character.simc content with command-line arguments
+    character_content = update_character_simc(character_content, args)
 
     with open(profiles_file, 'r') as f:
         profiles_content = f.read()
@@ -166,7 +187,6 @@ def main(args):
     profiles = []
     for talent_combo in itertools.product(*filtered_talents.values()):
         params = dict(zip(filtered_talents.keys(), talent_combo))
-        params['name'] = "_".join(talent_combo)
         profiles.append(generate_simc_profile(params))
 
     if not profiles:
@@ -179,7 +199,7 @@ def main(args):
 
     print(f"\nCreated SimC file: {simc_file}")
 
-    html_output = generate_output_filename(args)
+    html_output = generate_output_filename(args, character_content)
     print(f"Starting SimC simulation...")
     results = run_simc(args.simc, simc_file, html_output)
 

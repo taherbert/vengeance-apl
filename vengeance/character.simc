@@ -1,11 +1,9 @@
 # SimC configuration
-target_error=0.05
+target_error=0.1
 iterations=1000
 report_details=1
 single_actor_batch=1
 optimize_expressions=1
-html=/Users/tom/Documents/GitHub/APL/report.html
-output=/Users/tom/Documents/GitHub/APL/log.txt
 
 # Character configuration
 demonhunter="Base"
