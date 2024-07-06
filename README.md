@@ -50,6 +50,8 @@ python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --targ
 ## Output
 The script generates an HTML file with simulation results in the current directory. The filename includes a timestamp and the simulation parameters.
 
+![CLI output](example-output.png "Example CLI output")
+
 ## Adapting for Different Specs
 To use this script for a different spec:
 
