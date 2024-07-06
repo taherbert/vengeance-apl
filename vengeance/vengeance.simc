@@ -2,8 +2,9 @@
 # threads=24
 # profileset_work_threads=2
 optimal_raid=1
+override.bloodlust=0
 target_error=0.05
-iterations=5000
+iterations=1000
 report_details=1
 single_actor_batch=1
 optimize_expressions=1

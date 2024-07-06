@@ -1,13 +1,13 @@
 # SimC configuration
 optimal_raid=1
 target_error=0.05
-iterations=5000
+iterations=1000
 report_details=1
 single_actor_batch=1
 optimize_expressions=1
 
 # Character configuration
-demonhunter="T31_Demon_Hunter_Vengeance"
+demonhunter="10T_60sec"
 source=default
 spec=vengeance
 level=70
@@ -15,7 +15,9 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMYYmZZGmZsNjZMjZwMz2MzsNzMMDGAAAAmlZghxyGTygZmBLA
+talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMbjBjtZMjZMDzMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
+desired_targets=1
+max_time=300
 
 # Default consumables
 potion=elemental_potion_of_ultimate_power_3
@@ -24,8 +26,23 @@ food=feisty_fish_sticks
 augmentation=draconic
 temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
 
-main_hand=thorncaller_claw,id=207784,bonus_id=10359/1488
-off_hand=stormslash,id=193688,bonus_id=10359/1488
+# Default gear
+head=impalers_of_the_hypogeal_nemesis,id=212065
+neck=sureki_zealots_insignia,id=225577
+shoulders=warmantle_of_the_hypogeal_nemesis,id=212063
+back=wings_of_shattered_sorrow,id=225574
+chest=chestguard_of_the_hypogeal_nemesis,id=212068
+wrists=armguards_of_the_hypogeal_nemesis,id=212061
+hands=claws_of_the_hypogeal_nemesis,id=212066
+waist=behemoths_eroded_cinch,id=225583
+legs=pantaloons_of_the_hypogeal_nemesis,id=212064
+feet=chitinspiked_jackboots,id=212445
+finger1=seal_of_the_voidtouched,id=225749
+finger2=seal_of_the_broken_mountain,id=225751
+trinket1=swarmlords_authority,id=212450
+trinket2=void_reapers_contract,id=212456
+main_hand=void_reapers_warp_blade,id=219877
+off_hand=duelists_dancing_steel,id=212392
 
 # Generic pre-combat actions
 actions.precombat=flask
@@ -33,30 +50,185 @@ actions.precombat+=/augmentation
 actions.precombat+=/food
 actions.precombat+=/snapshot_stats
 
-# Art of the Glaive stacking buff, up to 40 stacks
-actions=variable,name=rg_stacks,value=buff.reavers_glaive.stack
-# Reaver's Glaive is ready to be cast
-actions+=/variable,name=rg_ready,value=buff.reavers_glaive.up
-# Reaver's Glaive buffs are available
-actions+=/variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up
-actions+=/variable,name=rg_enhance_cleave,value=1
+# Global Variables
+actions.precombat+=/variable,name=single_target,value=spell_targets.spirit_bomb=1
+actions.precombat+=/variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
+actions.precombat+=/variable,name=big_aoe,value=spell_targets.spirit_bomb>=6
 
+# What is the largest number of souls I can generate with my next GCD?
+actions+=/variable,name=num_spawnable_souls,op=reset,default=0
+actions+=/variable,name=num_spawnable_souls,op=max,value=2,if=talent.fracture&cooldown.fracture.charges_fractional>=1&!buff.metamorphosis.up
+actions+=/variable,name=num_spawnable_souls,op=max,value=3,if=talent.fracture&cooldown.fracture.charges_fractional>=1&buff.metamorphosis.up
+actions+=/variable,name=num_spawnable_souls,op=max,value=1,if=talent.soul_sigils&cooldown.sigil_of_flame.up
+actions+=/variable,name=num_spawnable_souls,op=max,value=3+talent.soul_sigils.rank,if=talent.sigil_of_spite&cooldown.sigil_of_spite.up
+actions+=/variable,name=num_spawnable_souls,op=max,value=floor(0.6*spell_targets.immolation_aura)>?5,if=talent.fallout&cooldown.immolation_aura.up
+actions+=/variable,name=num_spawnable_souls,op=max,value=spell_targets.bulk_extraction>?5,if=talent.bulk_extraction&cooldown.bulk_extraction.up
+actions+=/variable,name=num_spawnable_souls,op=max,value=3,if=talent.soul_carver&cooldown.soul_carver.up
+# We add one additional soul to account for soul carver's soul spawns, which are not counted as inactive soul fragments in the the soul_fragments variable
+actions+=/variable,name=num_spawnable_souls,op=add,value=1,if=talent.soul_carver&(cooldown.soul_carver.remains>(cooldown.soul_carver.duration-3))
+
+# Global Templates
+$(this_action)=gcd.remains+execute_time
+$(fd_active)=talent.fiery_demise&active_dot.fiery_brand>0
+
+# Pre-pull actions
+actions.precombat+=/arcane_torrent
+actions.precombat+=/sigil_of_flame,if=hero_tree.aldrachi_reaver
+actions.precombat+=/immolation_aura
+
+# Generic actions for both hero trees
 actions+=/auto_attack
+actions+=/retarget_auto_attack,line_cd=1,target_if=min:debuff.reavers_mark.remains,if=hero_tree.aldrachi_reaver
+actions+=/disrupt,if=target.debuff.casting.react
+actions+=/infernal_strike,use_off_gcd=1
+actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains
+actions+=/run_action_list,name=ar,if=hero_tree.aldrachi_reaver
+actions+=/run_action_list,name=fs,if=hero_tree.felscarred
 
-actions+=/call_action_list,name=rg_prep,if=variable.rg_ready
-actions+=/call_action_list,name=rg_active,if=variable.rg_active
-actions+=/call_action_list,name=main,if=!(variable.rg_active|variable.rg_ready)
-
-# Make sure we have enough fury to cast enhanced soul cleave
-# TODO: after bugfix for keen_engagement, we can change 30 to 10
-actions.rg_prep+=/reavers_glaive,if=fury>=30|talent.keen_engagement&fury>=30|variable.rg_enhance_cleave&(talent.fracture&fury>=5|talent.keen_engagement|talent.shear_fury)
-actions.rg_prep+=/fracture,if=talent.fracture
-actions.rg_prep+=/shear,if=talent.shear_fury
-
-
-actions.rg_active+=/fracture,if=variable.rg_enhance_cleave|!buff.glaive_flurry.up
-actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave|!buff.rending_strike.up
+# External buffs
+actions.externals=invoke_external_buff,name=symbol_of_hope
+actions.externals+=/invoke_external_buff,name=power_infusion
 
 
-actions.main+=/fracture
-actions.main+=/soul_cleave
+# Soul fragment thresholds for Spirit Bomb usage
+$(st_spb_thresh_fd)=5
+$(small_aoe_spb_thresh_fd)=4
+$(big_aoe_spb_thresh_fd)=3
+
+# no spirit bomb in single target; 100 is to ensure threshold is never met
+$(st_spb_thresh)=100
+$(small_aoe_spb_thresh)=4
+$(big_aoe_spb_thresh)=3
+
+# Spirit Bomb conditions
+actions.ar+=/variable,name=spb_threshold,op=setif,condition=$(fd_active),value=(variable.single_target*$(st_spb_thresh_fd))+(variable.small_aoe*$(small_aoe_spb_thresh_fd))+(variable.big_aoe*$(big_aoe_spb_thresh_fd)),value_else=(variable.single_target*$(st_spb_thresh))+(variable.small_aoe*$(small_aoe_spb_thresh))+(variable.big_aoe*$(big_aoe_spb_thresh))
+actions.ar+=/variable,name=can_spb,value=soul_fragments>=variable.spb_threshold
+actions.ar+=/variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb_threshold
+actions.ar+=/variable,name=can_spb_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spb_threshold
+# We only want to check active soul fragments. We can often soul cleave while soul fragments are spawning, skipping the consumption of them.
+actions.ar+=/variable,name=dont_soul_cleave,value=soul_fragments>=2&(variable.can_spb|variable.can_spb_soon|variable.can_spb_one_gcd)
+
+# During Reaver's Glaive, enhance our soul cleave (1) or shear (0)
+actions.ar+=/variable,name=rg_enhance_cleave,value=0
+
+# Externals, potions, trinkets when reaver's mark is up and we have thrill of the fight damage up
+actions.ar+=/variable,name=cooldown_sync,value=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+actions.ar+=/potion,use_off_gcd=1,if=variable.cooldown_sync
+actions.ar+=/use_items,use_off_gcd=1,if=variable.cooldown_sync
+actions.ar+=/call_action_list,name=externals,if=variable.cooldown_sync
+
+
+actions.ar+=/call_action_list,name=rg_active,if=buff.glaive_flurry.up|buff.rending_strike.up
+
+# Meta can be used before the fracture if we won't waste souls (it will generate 4 souls)
+actions.rg_active+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(buff.rending_strike.up&!buff.glaive_flurry.up)&soul_fragments<=1
+# send the hunt before the rest of rg_active if doing so does not cause reavers mark to fall off -- this is to get more uptime on the hunt
+actions.rg_active+=/felblade,if=fury<30&!variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up
+actions.rg_active+=/the_hunt,if=!buff.reavers_glaive.up&(debuff.reavers_mark.remains>($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max))
+# Use RG buffs in the order that the variable rg_enhance_cleave dictates
+actions.rg_active+=/fracture,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
+actions.rg_active+=/shear,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
+actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up|variable.rg_enhance_cleave&!buff.rending_strike.up
+
+actions.ar+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
+# use soul cleave or spirit bomb to collect soul fragments if we are at risk of having reavers mark fall off before we can recast it
+actions.ar+=/soul_cleave,if=(debuff.reavers_mark.remains<=($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
+actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
+# We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
+actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
+actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
+actions.ar+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=$(this_action)
+actions.ar+=/immolation_aura
+# TODO - is there really no way for fel dev to be good in ST?
+actions.ar+=/fel_devastation,if=spell_targets>=2
+actions.ar+=/sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!prev_gcd.1.sigil_of_flame)
+actions.ar+=/sigil_of_spite
+actions.ar+=/soul_carver,if=dot.fiery_brand.ticking&((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
+actions.ar+=/bulk_extraction,if=spell_targets>=3
+actions.ar+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
+actions.ar+=/felblade,if=(fury<40&(variable.can_spb|variable.can_spb_soon))|fury<30
+actions.ar+=/spirit_bomb,if=variable.can_spb
+actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave&(fury>=60|fury.deficit<=30)
+actions.ar+=/fracture
+actions.ar+=/shear
+actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave
+actions.ar+=/felblade
+actions.ar+=/throw_glaive
+
+# Soul fragment thresholds with Fiery Demise active
+$(st_spbomb_thresh_fd)=5
+$(st_spburst_thresh_fd)=4
+$(small_aoe_spbomb_thresh_fd)=4
+$(small_aoe_spburst_thresh_fd)=4
+$(big_aoe_spbomb_thresh_fd)=3
+$(big_aoe_spburst_thresh_fd)=3
+
+# Soul fragment thresholds without Fiery Demise active
+$(st_spbomb_thresh)=5
+$(st_spburst_thresh)=5
+$(small_aoe_spbomb_thresh)=4
+$(small_aoe_spburst_thresh)=4
+$(big_aoe_spbomb_thresh)=4
+$(big_aoe_spburst_thresh)=3
+
+# Spirit Bomb conditions
+actions.fs+=/variable,name=spbomb_threshold,op=setif,condition=$(fd_active),value=(variable.single_target*$(st_spbomb_thresh_fd))+(variable.small_aoe*$(small_aoe_spbomb_thresh_fd))+(variable.big_aoe*$(big_aoe_spbomb_thresh_fd)),value_else=(variable.single_target*$(st_spbomb_thresh))+(variable.small_aoe*$(small_aoe_spbomb_thresh))+(variable.big_aoe*$(big_aoe_spbomb_thresh))
+actions.fs+=/variable,name=can_spbomb,value=soul_fragments>=variable.spbomb_threshold
+actions.fs+=/variable,name=can_spbomb_soon,value=soul_fragments.total>=variable.spbomb_threshold
+actions.fs+=/variable,name=can_spbomb_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spbomb_threshold
+
+# Spirit Burst conditions
+actions.fs+=/variable,name=spburst_threshold,op=setif,condition=$(fd_active),value=(variable.single_target*$(st_spburst_thresh_fd))+(variable.small_aoe*$(small_aoe_spburst_thresh_fd))+(variable.big_aoe*$(big_aoe_spburst_thresh_fd)),value_else=(variable.single_target*$(st_spburst_thresh))+(variable.small_aoe*$(small_aoe_spburst_thresh))+(variable.big_aoe*$(big_aoe_spburst_thresh))
+actions.fs+=/variable,name=can_spburst,value=soul_fragments>=variable.spburst_threshold
+actions.fs+=/variable,name=can_spburst_soon,value=soul_fragments.total>=variable.spburst_threshold
+actions.fs+=/variable,name=can_spburst_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spburst_threshold
+
+actions.fs+=/variable,name=dont_soul_cleave,value=((cooldown.fel_devastation.remains<=$(this_action))&fury<80)|((variable.can_spbomb|variable.can_spbomb_soon)&!buff.demonsurge_hardcast.up)|((variable.can_spburst|variable.can_spburst_soon)&buff.demonsurge_hardcast.up)
+
+actions.fs+=/variable,name=fiery_brand_back_before_meta,op=setif,condition=talent.down_in_flames,value=charges>=max_charges|(charges_fractional>=1&full_recharge_time<=$(this_action))|(charges_fractional>=1&((max_charges-charges_fractional)*cooldown.fiery_brand.duration)<=cooldown.metamorphosis.remains),value_else=cooldown.fiery_brand.duration<=cooldown.metamorphosis.remains
+
+actions.fs+=/immolation_aura,if=!(prev_gcd.1.sigil_of_flame&cooldown.metamorphosis.up)
+
+actions.fs+=/call_action_list,name=fel_dev,if=buff.metamorphosis.up&!buff.demonsurge_hardcast.up&!(cooldown.metamorphosis.up&!buff.demonsurge_soul_sunder.up&!buff.demonsurge_spirit_burst.up)
+actions.fs+=/call_action_list,name=metamorphosis,if=buff.metamorphosis.up&buff.demonsurge_hardcast.up
+actions.fs+=/call_action_list,name=meta_prep,if=(cooldown.metamorphosis.remains<=(gcd.max*3))&!cooldown.fel_devastation.up
+
+actions.meta_prep+=/metamorphosis,use_off_gcd=1,if=cooldown.sigil_of_flame.charges<1
+actions.meta_prep+=/fiery_brand,if=active_dot.fiery_brand=0
+actions.meta_prep+=/sigil_of_flame
+
+actions.fel_dev+=/spirit_burst,if=talent.spirit_bomb&(variable.can_spburst|(buff.metamorphosis.remains<$(this_action)&buff.demonsurge_spirit_burst.up))
+actions.fel_dev+=/soul_sunder,if=!variable.dont_soul_cleave|(buff.metamorphosis.remains<$(this_action)&buff.demonsurge_soul_sunder.up)
+
+actions.metamorphosis+=/call_action_list,name=externals
+actions.metamorphosis+=/potion,use_off_gcd=1
+actions.metamorphosis+=/use_items,use_off_gcd=1
+actions.metamorphosis+=/fel_devastation
+actions.metamorphosis+=/sigil_of_doom
+actions.metamorphosis+=/sigil_of_spite,if=variable.can_spburst_one_gcd
+actions.metamorphosis+=/soul_carver,if=variable.can_spburst_one_gcd&!prev_gcd.1.sigil_of_spite
+actions.metamorphosis+=/bulk_extraction,if=spell_targets>=3
+actions.metamorphosis+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
+actions.metamorphosis+=/felblade,if=(fury<40&(variable.can_spburst|variable.can_spburst_soon))|fury<30
+actions.metamorphosis+=/spirit_burst,if=talent.spirit_bomb&(variable.can_spburst)
+actions.metamorphosis+=/soul_sunder,if=!variable.dont_soul_cleave
+actions.metamorphosis+=/felblade
+actions.metamorphosis+=/fracture
+
+actions.fs+=/fiery_brand,if=!talent.fiery_demise|talent.fiery_demise&((talent.down_in_flames&full_recharge_time<=$(this_action))|active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta)
+actions.fs+=/fracture,if=(cooldown.fel_devastation.remains<=$(this_action))&(!(variable.can_spburst|variable.can_spburst_soon))|(fury<50&fury>=25)
+actions.fs+=/felblade,if=(cooldown.fel_devastation.remains<=$(this_action))&fury<50
+actions.fs+=/fel_devastation,if=variable.can_spburst|variable.can_spburst_soon
+actions.fs+=/felblade,if=cooldown.fel_devastation.remains<=(gcd.max*4)&fury.deficit>40
+actions.fs+=/soul_carver,if=(cooldown.soul_carver.duration<=(cooldown.metamorphosis.remains+buff.metamorphosis.duration-(gcd.max*4)))&!variable.can_spbomb&!variable.can_spbomb_soon
+actions.fs+=/the_hunt
+actions.fs+=/sigil_of_spite,if=(cooldown.soul_carver.duration<=(cooldown.metamorphosis.remains+buff.metamorphosis.duration-(gcd.max*4)))&!variable.can_spbomb
+actions.fs+=/sigil_of_flame,if=full_recharge_time<=(cooldown.metamorphosis.remains-(gcd.max*3))
+actions.fs+=/bulk_extraction,if=spell_targets>=3&full_recharge_time<=(cooldown.metamorphosis.remains+(gcd.max*3))
+actions.fs+=/fracture,if=(spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25)|((variable.can_spbomb|variable.can_spbomb_soon|variable.can_spbomb_one_gcd)&fury<40)
+actions.fs+=/felblade,if=((variable.can_spbomb|variable.can_spbomb_soon)&fury<40)|fury<30
+actions.fs+=/spirit_bomb,if=variable.can_spbomb
+actions.fs+=/fracture,if=variable.can_spbomb_one_gcd&soul_fragments.total>=2
+actions.fs+=/soul_cleave,if=!variable.dont_soul_cleave
+actions.fs+=/fracture
+actions.fs+=/throw_glaive

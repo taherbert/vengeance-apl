@@ -1,21 +1,32 @@
+import os
+
 def combine_files(main_file, output_file):
-    with open(output_file, 'w') as outfile:
-        with open(main_file, 'r') as infile:
+    base_dir = os.path.dirname(main_file)
+
+    def process_file(file_path):
+        content = []
+        with open(file_path, 'r') as infile:
             for line in infile:
                 if line.startswith('input='):
                     # Extract filename from input line
                     filename = line.split('=')[1].strip()
-                    # Write contents of the referenced file
-                    with open(filename, 'r') as imported_file:
-                        outfile.write(f"\n")
-                        outfile.write(imported_file.read())
-                        outfile.write("\n")
-                # else if line contains the phrase "Imports" case insensitive remove the entire line and carriage return and continue
+                    # Construct full path for the input file
+                    full_path = os.path.join(base_dir, filename)
+                    # Recursively process the referenced file
+                    content.extend(['\n'] + process_file(full_path) + ['\n'])
                 elif line.lower().startswith('# imports'):
-                    # delete the line
-                    outfile.write(f"")
+                    # Delete the line
+                    continue
                 else:
-                    outfile.write(line)
+                    content.append(line)
+        return content
+
+    # Process the main file
+    combined_content = process_file(main_file)
+
+    # Write the combined content to the output file
+    with open(output_file, 'w') as outfile:
+        outfile.writelines(combined_content)
 
 # Usage
 combine_files('vengeance/vengeance.simc', 'vengeance/vengeance_full.simc')

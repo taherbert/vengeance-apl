@@ -1,5 +1,14 @@
+# SimC configuration
+target_error=0.05
+iterations=1000
+report_details=1
+single_actor_batch=1
+optimize_expressions=1
+html=/Users/tom/Documents/GitHub/APL/report.html
+output=/Users/tom/Documents/GitHub/APL/log.txt
+
 # Character configuration
-demonhunter="1T_5min"
+demonhunter="Base"
 source=default
 spec=vengeance
 level=70
@@ -7,16 +16,13 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-# DiF fel
-# talents=CUkAxqeQK0B5NG0FroXuLKhPHBAYMzMjhZkZmxYYmZZMYsNjZMjZYmZ2mZmtZmhZwAAAAwsMziZbmZmltZZaaGMzMDbA
-# IS fel
-# talents=CUkAxqeQK0B5NG0FroXuLKhPHBAYMzMjhZkZmxYYmZbmBjtZMjZMDmZ2mZmtZmhZwAAAAwsMziZbmZmltZZaaGMzMDbA
-# IS aldrachi
-talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMbzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
-# DiF aldrachi
-# talents=CUkAxqeQK0B5NG0FroXuLKhPHBAGjZmZMMjMzMGDzMLzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
-desired_targets=1
-max_time=300
+talents=
+desired_targets=5
+max_time=60
+
+# Buff configuration
+optimal_raid=1
+# override.bloodlust=0
 
 # Default consumables
 potion=elemental_potion_of_ultimate_power_3
@@ -24,3 +30,9 @@ flask=iced_phial_of_corrupting_rage_3
 food=feisty_fish_sticks
 augmentation=draconic
 temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
+
+# Imports
+input=/Users/tom/Documents/GitHub/APL/vengeance/gear.simc
+input=/Users/tom/Documents/GitHub/APL/vengeance/actions.simc
+# input=/Users/tom/Documents/GitHub/APL/vengeance/profile_templates.simc
+# input=/Users/tom/Documents/GitHub/APL/vengeance/manual_profiles.simc

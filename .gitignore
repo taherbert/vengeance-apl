@@ -1,0 +1,8 @@
+apl-wiki/
+other classes ideas/
+log.txt
+*.html
+*.json
+*.xml
+*.code-workspace
+.DS_Store

@@ -14,168 +14,154 @@ Raid Events:
 
 
 DPS Ranking:
- 359151 100.0%  Raid
- 359151  100.0%  1T_5min
+  36544 100.0%  Raid
+  36544  100.0%  Base
 
 HPS Ranking:
-  20994 100.0%%  Raid
-  20994  100.0%  1T_5min
+      0 100.0%%  Raid
 
-Player: 1T_5min night_elf demonhunter vengeance 70
-  DPS=359150.9765462455 DPS-Error=188.09514942875052/0.05% DPS-Range=23913.28141889794/6.66%
-  HPS=20993.66131770565 HPS-Error=120.49093824479365/0.57% HPS-Range=11732.595974560332/55.89%
-  DTPS=37270.37841380598 DTPS-Error=120.52804870701182/0.32% DTPS-Range=15600.12222332104/41.86%
-  DPR=20919.10312453502 RPS-Out=17.154830588235615 RPS-In=17.446603313407184 Resource=fury Waiting=0 ApM=81.71061150082139
-  Talents: CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGDzMbzMYsNjZMjZGMz2MzsNzMMDGAAAAmlZWMbzMzssNLTTzgZmBLA
+Player: Base night_elf demonhunter vengeance 70
+  DPS=36544.339154744506 DPS-Error=160.26485743658532/0.44% DPS-Range=9135.23902775953/25.00%
+  DTPS=70778.34309084601 DTPS-Error=720.4174725028392/1.02% DTPS-Range=35470.43479460462/50.11%
+
+  Talents: CUkAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAkAAA
   Covenant: invalid
   Core Stats:    strength=2825|2739(2739)  agility=21360|21274(21274)  stamina=171383|163222(94212)  intellect=1582|1421(1421)  spirit=0|0(0)  health=3427660|3264440  mana=0|0
-  Generic Stats: mastery=39.09%|39.09%(2976)  versatility=7.96%|4.96%(1024)  leech=10.00%|10.00%(0)  runspeed=7.14%|7.14%(0)
+  Generic Stats: mastery=39.09%|36.09%(2976)  versatility=7.96%|4.96%(1024)  leech=0.00%|0.00%(0)  runspeed=7.14%|7.14%(0)
   Spell Stats:   power=1582|1421(0)  hit=18.00%|18.00%(0)  crit=56.77%|51.64%(7792)  haste=52.12%|51.85%(9946)  speed=52.12%|51.85%  manareg=0|0(0)
-  Attack Stats:  power=28272|26818(0)  hit=7.50%|7.50%(0)  crit=56.77%|51.64%(7792)  expertise=10.50%/10.50%|10.50%/10.50%(0)  haste=52.12%|51.85%(9946)  speed=52.12%|51.85%
-  Defense Stats: armor=50217|50183(18203) miss=3.00%|3.00%  dodge=26.24%|26.18%(0)  parry=28.98%|27.23%(0)  block=0.00%|0.00%(0) crit=-6.00%|-6.00%  versatility=3.98%|2.48%(1024)
+  Attack Stats:  power=28272|26393(0)  hit=7.50%|7.50%(0)  crit=56.77%|51.64%(7792)  expertise=10.50%/10.50%|10.50%/10.50%(0)  haste=52.12%|51.85%(9946)  speed=52.12%|51.85%
+  Defense Stats: armor=50217|49545(18203) miss=3.00%|3.00%  dodge=26.24%|26.18%(0)  parry=25.98%|24.23%(0)  block=0.00%|0.00%(0) crit=-6.00%|-6.00%  versatility=3.98%|2.48%(1024)
   Priorities (actions.precombat):
     flask/augmentation/food/snapshot_stats/variable,name=single_target,value=spell_targets.spirit_bomb=1
     variable,name=small_aoe,value=spell_targets.spirit_bomb>=2&spell_targets.spirit_bomb<=5
-    variable,name=big_aoe,value=spell_targets.spirit_bomb>=6/sigil_of_flame,if=hero_tree.aldrachi_reaver/immolation_aura
+    variable,name=big_aoe,value=spell_targets.spirit_bomb>=6/arcane_torrent/sigil_of_flame,if=hero_tree.aldrachi_reaver/immolation_aura
   Priorities (actions.default):
+    variable,name=num_spawnable_souls,op=reset,default=0
+    variable,name=num_spawnable_souls,op=max,value=2,if=talent.fracture&cooldown.fracture.charges_fractional>=1&!buff.metamorphosis.up
+    variable,name=num_spawnable_souls,op=max,value=3,if=talent.fracture&cooldown.fracture.charges_fractional>=1&buff.metamorphosis.up
+    variable,name=num_spawnable_souls,op=max,value=1,if=talent.soul_sigils&cooldown.sigil_of_flame.up
+    variable,name=num_spawnable_souls,op=max,value=3+talent.soul_sigils.rank,if=talent.sigil_of_spite&cooldown.sigil_of_spite.up
+    variable,name=num_spawnable_souls,op=max,value=floor(0.6*spell_targets.immolation_aura)>?5,if=talent.fallout&cooldown.immolation_aura.up
+    variable,name=num_spawnable_souls,op=max,value=spell_targets.bulk_extraction>?5,if=talent.bulk_extraction&cooldown.bulk_extraction.up
+    variable,name=num_spawnable_souls,op=max,value=3,if=talent.soul_carver&cooldown.soul_carver.up
+    variable,name=num_spawnable_souls,op=add,value=1,if=talent.soul_carver&(cooldown.soul_carver.remains>(cooldown.soul_carver.duration-3))
     auto_attack/retarget_auto_attack,line_cd=1,target_if=min:debuff.reavers_mark.remains,if=hero_tree.aldrachi_reaver
     disrupt,if=target.debuff.casting.react/infernal_strike,use_off_gcd=1
     demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains/run_action_list,name=ar,if=hero_tree.aldrachi_reaver
     run_action_list,name=fs,if=hero_tree.felscarred
-  Priorities (actions.main):
-    metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
-    soul_cleave,if=(debuff.reavers_mark.remains<(gcd.remains+execute_time+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
-    spirit_bomb,if=(debuff.reavers_mark.remains<(gcd.remains+execute_time+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
-    reavers_glaive,if=(buff.reavers_glaive.up&buff.art_of_the_glaive.stack>=28)|(debuff.reavers_mark.remains<=(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max*2))|cooldown.the_hunt.remains<(gcd.remains+execute_time+gcd.max*2)
-    the_hunt,if=!buff.reavers_glaive.up
-    fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=gcd.remains+execute_time/immolation_aura
-    sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!in_flight)/sigil_of_spite
-    soul_carver,if=active_dot.fiery_brand>0&((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
-    bulk_extraction,if=spell_targets>=3/spirit_bomb,if=variable.can_spb/fel_devastation,if=spell_targets>=2
-    soul_cleave,if=fury>=60&!variable.dont_soul_cleave/felblade,if=fury<30/fracture/soul_cleave,if=!variable.dont_soul_cleave/shear/felblade
-    throw_glaive
-  Priorities (actions.rg_active):
-    metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(buff.rending_strike.up&!buff.glaive_flurry.up)
-    the_hunt,if=!buff.reavers_glaive.up&(debuff.reavers_mark.remains>(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+gcd.max))
-    fracture,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
-    shear,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
-    soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up|variable.rg_enhance_cleave&!buff.rending_strike.up
-  Priorities (actions.ar):
-    variable,name=spb_threshold,op=setif,condition=talent.fiery_demise&active_dot.fiery_brand>0,value=(variable.single_target*5)+(variable.small_aoe*4)+(variable.big_aoe*3),value_else=(variable.single_target*100)+(variable.small_aoe*4)+(variable.big_aoe*4)
-    variable,name=can_spb,value=soul_fragments>=variable.spb_threshold
-    variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb_threshold
-    variable,name=can_spb_one_gcd,value=(soul_fragments.total+2)>=variable.spb_threshold/variable,name=rg_ready,value=buff.reavers_glaive.up
-    variable,name=rg_active,value=buff.glaive_flurry.up|buff.rending_strike.up/variable,name=rg_enhance_cleave,value=0
-    potion,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
-    use_items,use_off_gcd=1,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
-    call_action_list,name=externals,if=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
-    call_action_list,name=rg_active,if=variable.rg_active/call_action_list,name=main
   Actions:
-    art_of_the_glaive              Count=   0.0|  0.000sec  DPE=     0| 1.72%  DPET=      0  DPR=      0  pDPS=  6173  Miss= 0.00%  Hit= 23544| 23228| 25153  Crit= 47098| 46455| 50307|55.75%
-    auto_attack_mh                 Count= 248.8|  1.399sec  DPE= 17710| 4.09%  DPET=  12724  DPR=      0  pDPS= 14687  Miss=16.36%  Hit= 12705| 11072| 15107  Crit= 25413| 22144| 30215|55.74%
-    auto_attack_oh                 Count= 241.1|  1.441sec  DPE=  8849| 1.98%  DPET=   6191  DPR=      0  pDPS=  7111  Miss=16.41%  Hit=  6348|  5536|  7554  Crit= 12698| 11072| 15107|55.79%
-    consume_soul_lesser            Count= 427.5|  0.693sec  DPE=  2688|18.24%  DPET=      0  DPR=      0  pDPS=  3835  Miss= 0.00%  Hit=  2688|     0| 75094
-    demon_spikes                   Count=  25.2| 12.370sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    disrupt                        Count=   2.5|108.532sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    felblade                       Count=   1.6| 91.663sec  DPE=112698| 0.17%  DPET= 223556  DPR=      0  pDPS=   608  Miss= 0.00%  Hit= 72303| 33470| 95285  Crit=144397| 66940|190569|56.03%
-    fiery_brand                    Count=   5.4| 60.383sec  DPE=865400| 1.38%  DPET= 912395  DPR=      0  pDPS=  4964  Miss= 0.00%  Hit=175309|104652|202673  Crit=350340|209304|405345|56.09%
-    fiery_brand_dot                Count=   0.0|  0.000sec  DPE=     0| 2.99%  DPET=      0  DPR=      0  pDPS= 10729  TickCount=   133  MissTick= 0.00%  Tick= 15475|  5659| 18589  CritTick= 30945| 11318| 37178|55.86%  UpTime= 44.11%
-    fracture                       Count=  83.5|  3.591sec  DPE= 92588| 7.17%  DPET=  97336  DPR=      0  pDPS= 25760  Miss= 0.00%  Hit= 29713| 18185| 39681  Crit= 59402| 36371| 79363|55.89%
-    frailty_heal                   Count= 299.3|  1.000sec  DPE= 10082|47.87%  DPET=      0  DPR=      0  pDPS= 10047  Miss= 0.00%  Hit= 10081|     0|520434
-    immolation_aura                Count=  30.2|  9.839sec  DPE=204104| 5.37%  DPET= 214184  DPR=      0  pDPS= 19275  Miss= 0.00%  Hit= 26592| 14052| 41338  Crit= 53164| 28104| 82675|61.53%  MissTick= 0.00%  Tick= 10024|  5053| 15436  CritTick= 20052| 10106| 31370|61.80%
-    infernal_armor                 Count=  43.2|  6.999sec  DPE=  8907| 0.36%  DPET=      0  DPR=      0  pDPS=  1283  Miss= 0.00%  Hit=  5710|  2595|  7927  Crit= 11429|  5390| 15855|55.90%
-    infernal_strike                Count=  39.0|  7.981sec  DPE= 59694| 2.16%  DPET=      0  DPR=      0  pDPS=  7763  Miss= 0.00%  Hit= 38403| 19802| 60685  Crit= 76818| 40381|123359|55.91%
-    leech                          Count= 315.9|  0.948sec  DPE=  4677|23.44%  DPET=      0  DPR=      0  pDPS=  4913  Miss= 0.00%  Hit=  4676|     0|169151
-    metamorphosis                  Count=   3.0|121.913sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    overwhelming_rage              Count=   4.0| 58.647sec  DPE=657662| 0.00%  DPET=      0  DPR=      0  pDPS=  8805  TickCount=    20  MissTick= 0.00%  Tick=135587| 86540|211051  UpTime= 19.49%
-    phantom_reaping                Count=  26.5| 11.124sec  DPE=146755| 3.12%  DPET=      0  DPR=      0  pDPS= 11220  Miss= 0.00%  Hit= 81524| 80636| 84668  Crit=163085|161272|169335|55.99%
-    phantom_reaping_echo           Count=  16.5| 11.840sec  DPE= 31311| 0.48%  DPET=      0  DPR=      0  pDPS=  1724  Miss= 0.00%  Hit= 20159| 20159| 20159  Crit= 40318| 40318| 40318|55.32%
-    potion                         Count=   1.5|301.255sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    queensbane                     Count=  17.6| 16.651sec  DPE= 72200| 1.18%  DPET=      0  DPR=      0  pDPS=  4231  TickCount=    70  MissTick= 0.00%  Tick= 11642| 11528| 12104  CritTick= 23285| 23055| 24208|55.90%  UpTime= 46.62%
-    ravenous_scarab                Count= 126.9|  2.306sec  DPE=  2839| 0.33%  DPET=      0  DPR=      0  pDPS=  1202  Miss= 0.00%  Hit=  1821|  1797|  1887  Crit=  3643|  3593|  3773|56.06%
-    ravenous_swarm                 Count=   5.3| 61.743sec  DPE=     0| 0.00%  DPET=      0  DPR=      0  pDPS=     0
-    reavers_glaive                 Count=  16.8| 18.322sec  DPE=110216| 1.72%  DPET=      0  DPR=      0  pDPS=  6184  Miss= 0.00%  Hit= 70638| 69683| 75460  Crit=141289|139366|150920|56.08%
-    sigil_of_flame                 Count=  15.0| 21.930sec  DPE=818545|11.43%  DPET= 915279  DPR=      0  pDPS= 41116  Miss= 0.00%  Hit=109417| 56099|171375  Crit=217712|112197|348278|55.88%  TickCount=   141  MissTick= 0.00%  Tick= 46278|  6076|165004  CritTick= 92448| 12153|330008|55.99%  UpTime= 91.16%
-    sigil_of_spite                 Count=   6.0| 54.082sec  DPE=456934| 2.54%  DPET= 479792  DPR=      0  pDPS=  9125  Miss= 0.00%  Hit=294295|179811|342710  Crit=586868|359623|685421|56.09%
-    soul_carver                    Count=   5.3| 61.335sec  DPE=564927| 2.79%  DPET= 596267  DPR=      0  pDPS= 10007  Miss= 0.00%  Hit=236734|142362|281220  Crit=473834|290096|562439|56.50%  TickCount=    16  MissTick= 0.00%  Tick= 41712| 29727| 46772  CritTick= 83423| 59453| 93779|56.06%  UpTime=  5.28%
-    soul_carver_oh                 Count=   0.0|  0.000sec  DPE=     0| 0.91%  DPET=      0  DPR=      0  pDPS=  3280  Miss= 0.00%  Hit=118322| 72524|140610  Crit=236987|142362|281220|56.29%
-    soul_cleave                    Count= 143.4|  2.093sec  DPE=234004|31.15%  DPET= 244436  DPR=   7781  pDPS=111781  Miss= 0.00%  Hit=150208| 81843|250813  Crit=300278|163687|501627|55.84%
-    soul_cleave_heal               Count=   0.0|  0.000sec  DPE=     0|10.46%  DPET=      0  DPR=      0  pDPS=  2199  Miss= 0.00%  Hit=  3492|     0| 20799  Crit=  5465|     0| 41599|55.89%
-    spirit_bomb                    Count=  21.2| 13.751sec  DPE=402094| 7.91%  DPET= 435774  DPR=  10029  pDPS= 28456  Miss= 0.00%  Hit=258432| 55006|365386  Crit=516273|110012|730772|56.10%
-    the_hunt                       Count=   3.7| 91.151sec  DPE=985914| 3.40%  DPET=1061154  DPR=      0  pDPS= 12238  Miss= 0.00%  Hit=295721|208115|395260  Crit=588041|412266|790520|56.53%  TickCount=    19  MissTick= 0.00%  Tick= 64324| 30639| 74442  CritTick=128930| 60222|148884|56.09%  UpTime=  7.37%
-    warblades_hunger               Count=   0.0|  0.000sec  DPE=     0| 2.70%  DPET=      0  DPR=      0  pDPS=  9691  Miss= 0.00%  Hit= 22993|  9291| 30184  Crit= 45966| 18582| 60368|55.81%
-    wounded_quarry                 Count=   0.0|  0.000sec  DPE=     0| 2.94%  DPET=      0  DPR=      0  pDPS= 10545  Miss= 0.00%  Hit=  4210|  2889|  5570  Crit=  8423|  5778| 11141|55.79%
+    auto_attack_mh                 Count=  50.4|  1.401sec  DPE= 15609|35.60%  DPET=11316  DPR=  0  pDPS=13014  Miss=16.38%  Hit= 11198| 11072| 11626  Crit= 22390| 22144| 23251|55.80%
+    auto_attack_oh                 Count=  49.2|  1.428sec  DPE=  7793|17.34%  DPET= 5572  DPR=  0  pDPS= 6338  Miss=16.66%  Hit=  5594|  5536|  5813  Crit= 11192| 11072| 11626|55.93%
+    demon_spikes                   Count=   7.0|  9.597sec  DPE=     0| 0.00%  DPET=    0  DPR=  0  pDPS=    0
+    disrupt                        Count=   1.3| 60.971sec  DPE=     0| 0.00%  DPET=    0  DPR=  0  pDPS=    0
+    immolation_aura                Count=   0.0|  0.000sec  DPE=     0| 9.11%  DPET=    0  DPR=  0  pDPS= 3367  MissTick= 0.00%  Tick=  4290|  4247|  4459  CritTick=  8578|  8494|  8919|56.44%
+    infernal_strike                Count=   3.5| 20.000sec  DPE=136146|21.81%  DPET=    0  DPR=  0  pDPS= 7953  Miss= 0.00%  Hit= 17709| 17661| 18544  Crit= 35425| 35321| 37087|55.89%
+    overwhelming_rage              Count=   0.9| 29.400sec  DPE=592411| 0.00%  DPET=    0  DPR=  0  pDPS= 8558  TickCount=     4  MissTick= 0.00%  Tick=138436| 93941|148106  UpTime= 18.64%
+    phantom_reaping                Count=   1.7| 21.389sec  DPE= 50556| 2.68%  DPET=    0  DPR=  0  pDPS=  974  Miss= 0.00%  Hit=  4561|  1452| 16935  Crit=  8622|  2903| 33870|56.21%
+    phantom_reaping_echo           Count=   0.9|  0.000sec  DPE= 31318| 1.28%  DPET=    0  DPR=  0  pDPS=  463  Miss= 0.00%  Hit=  4032|  4032|  4032  Crit=  8064|  8064|  8064|55.34%
+    queensbane                     Count=   3.8| 11.555sec  DPE= 66837|11.43%  DPET=    0  DPR=  0  pDPS= 4161  TickCount=    14  MissTick= 0.00%  Tick= 11581| 11528| 12105  CritTick= 23167| 23057| 24210|55.94%  UpTime= 46.14%
+    ravenous_scarab                Count=   5.9|  8.445sec  DPE=  2814| 0.75%  DPET=    0  DPR=  0  pDPS=  274  Miss= 0.00%  Hit=  1813|  1797|  1887  Crit=  3625|  3593|  3773|56.27%
 
   Constant Buffs:
-    arcane_intellect/battle_shout/draconic_augmentation/feisty_fish_sticks/iced_phial_of_corrupting_rage/mark_of_the_wild/power_word_fortitude
-    windfury_totem
+    arcane_intellect/battle_shout/draconic_augmentation/feisty_fish_sticks/iced_phial_of_corrupting_rage/mark_of_the_wild/power_word_fortitude/skyfury
   Dynamic Buffs:
-    art_of_the_glaive                  : start= 14.4 refresh=414.0 interval= 21.4 trigger=  0.7 duration= 19.1 uptime= 91.23%
-    bloodlust                          : start=  1.0 refresh=  0.0 interval=  0.0 trigger=  0.0 duration= 40.0 uptime= 13.51%
-    corrupting_rage                    : start=  4.8 refresh=  0.0 interval= 62.5 trigger= 58.8 duration= 50.7 uptime= 80.42%
-    demon_spikes                       : start= 25.2 refresh=  0.0 interval= 12.1 trigger= 12.4 duration=  5.9 uptime= 50.07%  benefit= 50.21%
-    demonsurge_consuming_fire          : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
-    demonsurge_fel_desolation          : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
-    demonsurge_sigil_of_doom           : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
-    demonsurge_soul_sunder             : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
-    demonsurge_spirit_burst            : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
-    elemental_potion_of_ultimate_power : start=  1.5 refresh=  0.0 interval=301.2 trigger=301.2 duration= 27.5 uptime= 13.24%
-    glaive_flurry                      : start= 16.8 refresh=  0.0 interval= 18.3 trigger= 18.3 duration=  0.8 uptime=  0.03%  benefit= 10.52%
-    immolation_aura                    : start= 31.2 refresh=  0.0 interval= 13.5 trigger=  9.8 duration= 10.3 uptime= 90.03%
-    immolation_aura1                   : start= 28.3 refresh=  0.0 interval= 10.8 trigger= 10.7 duration=  8.9 uptime= 83.32%
-    immolation_aura2                   : start=  3.0 refresh=  0.0 interval= 15.3 trigger= 15.3 duration=  9.0 uptime=  8.98%
-    metamorphosis                      : start=  3.0 refresh=  0.0 interval=121.9 trigger=121.9 duration= 14.7 uptime= 14.60%
-    ravenous_scarab                    : start= 25.8 refresh=100.8 interval= 11.6 trigger=  2.3 duration=  4.0 uptime= 34.50%
-    ravenous_swarm                     : start=  5.3 refresh=  0.0 interval= 61.7 trigger= 61.7 duration=  3.0 uptime=  5.31%
-    reavers_glaive                     : start= 17.2 refresh=  9.6 interval= 17.8 trigger= 11.2 duration=  5.7 uptime= 32.28%  benefit= 34.71%
-    rending_strike                     : start= 16.8 refresh=  0.0 interval= 18.3 trigger= 18.3 duration=  1.0 uptime=  5.43%  benefit= 33.52%
-    soul_fragments                     : start= 60.9 refresh=369.8 interval=  4.8 trigger=  0.7 duration=  3.9 uptime= 80.02%
-    soul_furnace_damage_amp            : start= 42.1 refresh=  0.3 interval=  7.1 trigger=  7.0 duration=  1.5 uptime= 20.69%  benefit= 29.25%
-    soul_furnace_stack                 : start= 43.3 refresh=385.1 interval=  6.9 trigger=  0.7 duration=  6.2 uptime= 89.15%
-    soulfuse                           : start=  1.0 refresh=427.4 interval=  0.0 trigger=  0.7 duration=296.6 uptime= 98.79%
-    thrill_of_the_fight_attack_speed   : start=  2.7 refresh= 14.0 interval= 78.5 trigger= 18.4 duration=107.8 uptime= 98.00%
-    thrill_of_the_fight_damage         : start= 16.7 refresh=  0.0 interval= 18.4 trigger= 18.4 duration=  9.8 uptime= 54.82%  benefit= 55.07%
-    warblades_hunger                   : start= 81.9 refresh=346.5 interval=  3.6 trigger=  0.7 duration=  2.5 uptime= 68.07%  benefit= 97.26%
-  Up-Times:
-      2.92% : Fury Cap                      
+    bloodlust        : start=  1.0 refresh=  0.0 interval=  0.0 trigger=  0.0 duration= 40.0 uptime= 66.90%
+    corrupting_rage  : start=  1.7 refresh=  0.0 interval= 34.3 trigger= 26.6 duration= 29.8 uptime= 80.91%
+    demon_spikes     : start=  7.0 refresh=  0.0 interval=  9.0 trigger=  9.5 duration=  5.8 uptime= 67.39%  benefit= 63.06%
+    immolation_aura  : start=  1.0 refresh=  0.0 interval=  0.0 trigger=  0.0 duration=  6.0 uptime= 10.04%
+    immolation_aura1 : start=  1.0 refresh=  0.0 interval=  0.0 trigger=  0.0 duration=  6.0 uptime= 10.04%
+    ravenous_scarab  : start=  4.8 refresh=  1.0 interval= 10.7 trigger=  8.5 duration=  3.1 uptime= 24.25%
   Procs:
-     34.43589 |   8.52469sec : Windfury (Main Hand)
-     33.06941 |   8.84751sec : Windfury (Off Hand)
-     19.67493 |  14.61533sec : parry_haste
-      3.72615 |  91.12567sec : delayed_aa_cast
-    431.77295 |   0.89257sec : soul_fragment_lesser
-     13.71414 |  20.94328sec : felblade_reset
-     74.29006 |   3.95123sec : soul_fragment_overflow
-    166.88658 |   1.78691sec : soul_fragment_from_fracture
-     17.92739 |  54.08873sec : soul_fragment_from_sigil_of_spite
-     18.08842 |  16.10250sec : soul_fragment_from_fallout
-     10.69534 |  25.55968sec : soul_fragment_from_meta
-     16.78456 |  18.35141sec : soul_fragment_from_aldrachi_tactics
-     48.29266 |   6.18332sec : soul_fragment_from_wounded_quarry
-    100.33767 |   5.84534sec : soul_fragment_from_vengeance_twws1_2pc
+      6.99099 |   7.49183sec : Skyfury (Main Hand)
+      6.58358 |   7.68886sec : Skyfury (Off Hand)
+      2.68168 |  10.38291sec : parry_haste
   Gains:
-    1149145.3 : consume_soul_lesser   (health)         (overflow=93.36%)
-        64.4 : felblade              (fury)         
-      2289.9 : fracture              (fury)         
-    3016953.2 : frailty_heal          (health)         (overflow=95.42%)
-       243.8 : immolation_aura       (fury)           (overflow=2.33%)
-       537.3 : immolation_aura_tick  (fury)           (overflow=2.81%)
-    1477309.5 : leech                 (health)         (overflow=87.58%)
-       329.0 : reavers_glaive        (fury)           (overflow=2.31%)
-       416.5 : sigil_of_flame        (fury)           (overflow=7.69%)
-        26.9 : sigil_of_flame_damage (fury)           (overflow=10.19%)
-    658823.9 : soul_cleave_heal      (health)         (overflow=85.45%)
-      1328.9 : volatile_flameblood   (fury)           (overflow=2.70%)
-  Waiting:  0.00%
+         8.0 : immolation_aura      (fury)         
+        12.0 : immolation_aura_tick (fury)         
+  Waiting: 97.88%
 
 
  *** Targets *** 
 
+Target: Dummy_Enemy_1 humanoid enemy unknown 73
+  DTPS=2404.983170376053 DTPS-Error=22.191049883414617/0.92% DTPS-Range=1037.5191276111834/43.14%
+  DPR=0 RPS-Out=2025.7328693275667 RPS-In=0 Resource=health Waiting=0 ApM=0
+  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|154124  mana=0|0
+  Generic Stats: mastery=0.00%|0.00%(0)  versatility=0.00%|0.00%(0)  leech=0.00%|0.00%(0)  runspeed=7.00%|7.00%(0)
+  Spell Stats:   power=0|0(0)  hit=0.00%|0.00%(0)  crit=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%  manareg=0|0(0)
+  Attack Stats:  power=0|0(0)  hit=0.00%|0.00%(0)  crit=5.00%|5.00%(0)  expertise=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%
+  Defense Stats: armor=9651|9651(9651) miss=3.00%|3.00%  dodge=3.00%|3.00%(0)  parry=3.00%|3.00%(0)  block=3.00%|3.00%(0) crit=0.00%|0.00%  versatility=0.00%|0.00%(0)
+  Priorities (actions.precombat):
+    snapshot_stats
+  Priorities (actions.default):
+
+  Actions:
+
+  Constant Buffs:
+    arcane_intellect/battle_shout/bleeding/chaos_brand/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude/skyfury
+  Waiting:  0.00%
+
+Target: Dummy_Enemy_2 humanoid enemy unknown 73
+  DTPS=2407.3170063245816 DTPS-Error=21.608899710347746/0.90% DTPS-Range=1218.222322860366/50.60%
+  DPR=0 RPS-Out=1971.2186388476455 RPS-In=0 Resource=health Waiting=0 ApM=0
+  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|114310  mana=0|0
+  Generic Stats: mastery=0.00%|0.00%(0)  versatility=0.00%|0.00%(0)  leech=0.00%|0.00%(0)  runspeed=7.00%|7.00%(0)
+  Spell Stats:   power=0|0(0)  hit=0.00%|0.00%(0)  crit=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%  manareg=0|0(0)
+  Attack Stats:  power=0|0(0)  hit=0.00%|0.00%(0)  crit=5.00%|5.00%(0)  expertise=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%
+  Defense Stats: armor=9651|9651(9651) miss=3.00%|3.00%  dodge=3.00%|3.00%(0)  parry=3.00%|3.00%(0)  block=3.00%|3.00%(0) crit=0.00%|0.00%  versatility=0.00%|0.00%(0)
+  Priorities (actions.precombat):
+    snapshot_stats
+  Priorities (actions.default):
+
+  Actions:
+
+  Constant Buffs:
+    arcane_intellect/battle_shout/bleeding/chaos_brand/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude/skyfury
+  Waiting:  0.00%
+
+Target: Dummy_Enemy_3 humanoid enemy unknown 73
+  DTPS=2418.7069563929413 DTPS-Error=21.364707630902238/0.88% DTPS-Range=899.1423890087964/37.17%
+  DPR=0 RPS-Out=2043.5055211102183 RPS-In=0 Resource=health Waiting=0 ApM=0
+  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|111643  mana=0|0
+  Generic Stats: mastery=0.00%|0.00%(0)  versatility=0.00%|0.00%(0)  leech=0.00%|0.00%(0)  runspeed=7.00%|7.00%(0)
+  Spell Stats:   power=0|0(0)  hit=0.00%|0.00%(0)  crit=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%  manareg=0|0(0)
+  Attack Stats:  power=0|0(0)  hit=0.00%|0.00%(0)  crit=5.00%|5.00%(0)  expertise=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%
+  Defense Stats: armor=9651|9651(9651) miss=3.00%|3.00%  dodge=3.00%|3.00%(0)  parry=3.00%|3.00%(0)  block=3.00%|3.00%(0) crit=0.00%|0.00%  versatility=0.00%|0.00%(0)
+  Priorities (actions.precombat):
+    snapshot_stats
+  Priorities (actions.default):
+
+  Actions:
+
+  Constant Buffs:
+    arcane_intellect/battle_shout/bleeding/chaos_brand/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude/skyfury
+  Waiting:  0.00%
+
+Target: Dummy_Enemy_4 humanoid enemy unknown 73
+  DTPS=2713.936952453891 DTPS-Error=43.462887744249905/1.60% DTPS-Range=2261.664677205061/83.34%
+  DPR=0 RPS-Out=2135.3748344814494 RPS-In=0 Resource=health Waiting=0 ApM=0
+  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|165436  mana=0|0
+  Generic Stats: mastery=0.00%|0.00%(0)  versatility=0.00%|0.00%(0)  leech=0.00%|0.00%(0)  runspeed=7.00%|7.00%(0)
+  Spell Stats:   power=0|0(0)  hit=0.00%|0.00%(0)  crit=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%  manareg=0|0(0)
+  Attack Stats:  power=0|0(0)  hit=0.00%|0.00%(0)  crit=5.00%|5.00%(0)  expertise=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%
+  Defense Stats: armor=9651|9651(9651) miss=3.00%|3.00%  dodge=3.00%|3.00%(0)  parry=3.00%|3.00%(0)  block=3.00%|3.00%(0) crit=0.00%|0.00%  versatility=0.00%|0.00%(0)
+  Priorities (actions.precombat):
+    snapshot_stats
+  Priorities (actions.default):
+
+  Actions:
+
+  Constant Buffs:
+    arcane_intellect/battle_shout/bleeding/chaos_brand/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude/skyfury
+  Dynamic Buffs:
+    hunters_mark : start=  1.0 refresh=  3.0 interval=  0.0 trigger=  0.0 duration=  0.0 uptime=  0.00%
+  Waiting:  0.00%
+
 Target: Fluffy_Pillow humanoid tank_dummy unknown 73
-  DPS=28465.032421797085 DPS-Error=0/0.00% DPS-Range=5910.596859005993/20.76%
-  DTPS=359150.9765462465 DTPS-Error=188.09514942875109/0.05% DTPS-Range=23913.281418898463/6.66%
-  DPR=0.08529817227701655 RPS-Out=333804.7222148115 RPS-In=0 Resource=health Waiting=46.48867614078414 ApM=3.3717650625695876
-  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|121014034  mana=0|0
+  DPS=62220.68439789942 DPS-Error=0/0.00% DPS-Range=24217.23686888049/38.92%
+  DTPS=26599.395069197057 DTPS-Error=134.77962554539772/0.51% DTPS-Range=7672.820308098357/28.85%
+  DPR=2.521775258509389 RPS-Out=24765.45777326981 RPS-In=0 Resource=health Waiting=44.871411602567434 ApM=4.806659974834673
+  Core Stats:    strength=0|0(0)  agility=0|0(0)  stamina=0|0(0)  intellect=0|0(0)  spirit=0|0(0)  health=0|1993537  mana=0|0
   Generic Stats: mastery=0.00%|0.00%(0)  versatility=0.00%|0.00%(0)  leech=0.00%|0.00%(0)  runspeed=7.00%|7.00%(0)
   Spell Stats:   power=0|0(0)  hit=0.00%|0.00%(0)  crit=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%  manareg=0|0(0)
   Attack Stats:  power=0|0(0)  hit=0.00%|0.00%(0)  crit=5.00%|5.00%(0)  expertise=0.00%|0.00%(0)  haste=0.00%|0.00%(0)  speed=0.00%|0.00%
@@ -188,40 +174,254 @@ Target: Fluffy_Pillow humanoid tank_dummy unknown 73
     spell_dot,damage=60000,range=1200,tick_time=2,cooldown=60,aoe_tanks=1,dot_duration=60,bleed=1
     pause_action,duration=30,cooldown=30,if=time>=30
   Actions:
-    melee_main_hand_1T_5min  Count=  77.6|  3.746sec  DPE= 41034|37.25%  DPET= 20517  DPR=  0  pDPS=10596  Miss= 0.00%  Hit= 88118| 29734|218502  Dodge=21.70%  Parry=31.73%
-    melee_nuke_1T_5min       Count=   5.5| 59.565sec  DPE=278517|17.82%  DPET=138953  DPR=  0  pDPS= 5085  Miss= 0.00%  Hit=278520|147065|405340
-    pause_action             Count=   4.5| 60.013sec  DPE=     0| 0.00%  DPET=     0  DPR=  0  pDPS=    0
-    spell_dot_1T_5min        Count=   5.3| 61.013sec  DPE=718878|44.93%  DPET=715752  DPR=  0  pDPS=12783  TickCount=   145  MissTick= 0.00%  Tick= 26504|  7467| 49777  UpTime= 96.54%
-    tank_heal                Count= 600.8|  0.500sec  DPE=     0| 0.00%  DPET=     0  DPR=  0  pDPS=    0
+    melee_main_hand_Base  Count=  15.4|  3.069sec  DPE=123180|49.99%  DPET= 61592  DPR=  0  pDPS=31256  Miss= 0.00%  Hit=217074|157697|250226  Dodge=21.35%  Parry=21.91%
+    melee_nuke_Base       Count=   1.4| 58.013sec  DPE=446010|17.08%  DPET=222537  DPR=  0  pDPS=10423  Miss= 0.00%  Hit=445870|369640|500444
+    spell_dot_Base        Count=   1.3| 61.013sec  DPE=983816|32.92%  DPET=979381  DPR=  0  pDPS=20542  TickCount=    27  MissTick= 0.00%  Tick= 45889| 25925| 51851  UpTime= 89.61%
+    tank_heal             Count= 121.7|  0.500sec  DPE=     0| 0.00%  DPET=     0  DPR=  0  pDPS=    0
 
   Constant Buffs:
-    arcane_intellect/battle_shout/bleeding/chaos_brand/hunters_mark/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude
-  Dynamic Buffs:
-    frailty        : start=164.4 refresh=  0.0 interval=134.1 trigger=  1.8 duration=256.4 uptime= 99.72%  benefit= 99.83%
-    reavers_mark   : start= 16.8 refresh=  0.0 interval= 18.4 trigger= 18.4 duration= 17.6 uptime= 98.23%  benefit= 98.64%
-    sigil_of_flame : start= 15.0 refresh=  0.0 interval= 26.5 trigger= 20.6 duration= 23.7 uptime= 89.86%  benefit= 84.50%
+    arcane_intellect/battle_shout/bleeding/chaos_brand/hunters_mark/mark_of_the_wild/mortal_wounds/mystic_touch/power_word_fortitude/skyfury
   Procs:
-      5.00840 |  60.01351sec : delayed_aa_cast
-  Waiting: 46.49%
+      1.00000 |   0.00000sec : delayed_aa_cast
+  Waiting: 44.87%
+
+
+Profilesets (median Damage per Second):
+    1413584.973 : felscarred_student_Hunt_CA_Illum_SpB_StF_BA_DGB
+    1411707.854 : felscarred_student_Hunt_CA_Illum_SpB_StF_BA_CoB
+    1405097.882 : felscarred_student_Hunt_CA_Illum_SpB_StF_BA_SC
+    1396018.388 : felscarred_student_CA_SOS_Illum_SpB_StF_BA_DGB
+    1393201.592 : felscarred_student_CA_SOS_Illum_SpB_StF_BA_CoB
+    1391197.675 : felscarred_student_Hunt_SOS_Illum_SpB_StF_BA_CoB
+    1386201.751 : felscarred_student_Hunt_SOS_Illum_SpB_StF_BA_DGB
+    1380118.178 : felscarred_student_Hunt_CA_Illum_SpB_BA_CoB_DGB
+    1378421.215 : felscarred_flamebound_Hunt_CA_Illum_SpB_StF_BA_DGB
+    1377775.994 : felscarred_student_CA_SOS_Illum_SpB_StF_BA_SC
+    1377295.059 : felscarred_student_Hunt_SOS_Illum_SpB_StF_BA_SC
+    1370835.414 : felscarred_student_Hunt_CA_Illum_SpB_BA_CoB_SC
+    1363829.609 : felscarred_student_CA_SOS_Illum_SpB_BA_CoB_DGB
+    1359858.161 : felscarred_student_Hunt_CA_Illum_SpB_BA_SC_DGB
+    1359328.015 : felscarred_student_Hunt_SOS_Illum_SpB_BA_CoB_DGB
+    1358568.243 : felscarred_flamebound_Hunt_CA_Illum_SpB_StF_BA_CoB
+    1357800.008 : felscarred_flamebound_Hunt_CA_Illum_SpB_StF_BA_SC
+    1356748.572 : felscarred_flamebound_CA_SOS_Illum_SpB_StF_BA_DGB
+    1354224.516 : felscarred_flamebound_CA_SOS_Illum_SpB_StF_BA_CoB
+    1348630.262 : felscarred_flamebound_Hunt_SOS_Illum_SpB_StF_BA_DGB
+    1344707.622 : felscarred_flamebound_Hunt_CA_Illum_SpB_BA_CoB_DGB
+    1344117.065 : felscarred_flamebound_Hunt_SOS_Illum_SpB_StF_BA_CoB
+    1341605.090 : felscarred_student_CA_SOS_Illum_SpB_BA_CoB_SC
+    1341407.242 : felscarred_flamebound_CA_SOS_Illum_SpB_StF_BA_SC
+    1340060.777 : felscarred_student_Hunt_SOS_Illum_SpB_BA_CoB_SC
+    1339501.997 : felscarred_student_CA_SOS_Illum_SpB_BA_SC_DGB
+    1330708.747 : felscarred_student_Hunt_SOS_Illum_SpB_BA_SC_DGB
+    1329856.443 : felscarred_flamebound_Hunt_CA_Illum_SpB_BA_SC_DGB
+    1327235.330 : felscarred_flamebound_Hunt_SOS_Illum_SpB_StF_BA_SC
+    1326728.609 : felscarred_flamebound_Hunt_CA_Illum_SpB_BA_CoB_SC
+    1322195.173 : felscarred_flamebound_CA_SOS_Illum_SpB_BA_CoB_DGB
+    1313572.679 : felscarred_flamebound_Hunt_SOS_Illum_SpB_BA_CoB_DGB
+    1313557.460 : felscarred_student_Hunt_CA_DiF_SpB_StF_BA_DGB
+    1307999.227 : felscarred_flamebound_CA_SOS_Illum_SpB_BA_SC_DGB
+    1307362.368 : felscarred_student_Hunt_CA_DiF_SpB_StF_BA_SC
+    1305020.015 : felscarred_student_Hunt_CA_DiF_SpB_StF_BA_CoB
+    1301390.751 : felscarred_student_CA_SOS_DiF_SpB_StF_BA_DGB
+    1301046.792 : felscarred_flamebound_Hunt_SOS_Illum_SpB_BA_CoB_SC
+    1296389.717 : felscarred_flamebound_CA_SOS_Illum_SpB_BA_CoB_SC
+    1294585.414 : felscarred_flamebound_Hunt_SOS_Illum_SpB_BA_SC_DGB
+    1291287.302 : felscarred_flamebound_Hunt_CA_DiF_SpB_StF_BA_DGB
+    1286372.442 : felscarred_student_Hunt_SOS_DiF_SpB_StF_BA_DGB
+    1284659.451 : felscarred_student_CA_SOS_DiF_SpB_StF_BA_CoB
+    1284413.237 : felscarred_flamebound_Hunt_CA_DiF_SpB_StF_BA_SC
+    1282921.700 : felscarred_student_Hunt_SOS_DiF_SpB_StF_BA_CoB
+    1280409.918 : felscarred_student_Hunt_SOS_DiF_SpB_StF_BA_SC
+    1278862.967 : felscarred_flamebound_CA_SOS_DiF_SpB_StF_BA_DGB
+    1277566.797 : felscarred_student_CA_SOS_DiF_SpB_StF_BA_SC
+    1273130.712 : felscarred_flamebound_Hunt_CA_DiF_SpB_StF_BA_CoB
+    1271564.602 : felscarred_student_Hunt_CA_DiF_SpB_BA_SC_DGB
+    1266279.938 : felscarred_flamebound_Hunt_SOS_DiF_SpB_StF_BA_DGB
+    1266146.674 : felscarred_student_Hunt_CA_DiF_SpB_BA_CoB_DGB
+    1259060.298 : felscarred_flamebound_Hunt_SOS_DiF_SpB_StF_BA_CoB
+    1258578.572 : felscarred_student_Hunt_CA_DiF_SpB_BA_CoB_SC
+    1258253.585 : felscarred_student_CA_SOS_DiF_SpB_BA_CoB_DGB
+    1257986.224 : felscarred_flamebound_CA_SOS_DiF_SpB_StF_BA_CoB
+    1255756.546 : felscarred_flamebound_CA_SOS_DiF_SpB_StF_BA_SC
+    1252692.600 : felscarred_flamebound_Hunt_SOS_DiF_SpB_StF_BA_SC
+    1246069.216 : felscarred_student_Hunt_SOS_DiF_SpB_BA_CoB_DGB
+    1245255.310 : felscarred_flamebound_Hunt_CA_DiF_SpB_BA_SC_DGB
+    1244761.233 : felscarred_student_CA_SOS_DiF_SpB_BA_SC_DGB
+    1238225.220 : felscarred_student_CA_SOS_DiF_SpB_BA_CoB_SC
+    1236353.094 : felscarred_student_Hunt_SOS_DiF_SpB_BA_SC_DGB
+    1235901.329 : felscarred_flamebound_Hunt_CA_DiF_SpB_BA_CoB_SC
+    1234018.401 : felscarred_student_Hunt_SOS_DiF_SpB_BA_CoB_SC
+    1233603.134 : felscarred_flamebound_Hunt_CA_DiF_SpB_BA_CoB_DGB
+    1226920.418 : felscarred_flamebound_CA_SOS_DiF_SpB_BA_CoB_DGB
+    1217544.024 : felscarred_flamebound_CA_SOS_DiF_SpB_BA_CoB_SC
+    1216793.345 : felscarred_flamebound_CA_SOS_DiF_SpB_BA_SC_DGB
+    1213093.088 : felscarred_flamebound_Hunt_SOS_DiF_SpB_BA_CoB_DGB
+    1212861.324 : felscarred_flamebound_Hunt_SOS_DiF_SpB_BA_SC_DGB
+    1211689.038 : felscarred_flamebound_Hunt_SOS_DiF_SpB_BA_CoB_SC
+    1199080.266 : felscarred_student_Hunt_CA_Illum_SpB_StF_CoB_DGB
+    1179008.162 : felscarred_student_Hunt_CA_Illum_SpB_StF_CoB_SC
+    1176135.904 : felscarred_student_Hunt_SOS_Illum_SpB_StF_CoB_DGB
+    1174256.010 : felscarred_student_CA_SOS_Illum_SpB_StF_CoB_DGB
+    1162439.405 : felscarred_flamebound_Hunt_CA_Illum_SpB_StF_CoB_DGB
+    1154962.287 : felscarred_student_CA_SOS_Illum_SpB_StF_CoB_SC
+    1154659.686 : felscarred_student_Hunt_SOS_Illum_SpB_StF_CoB_SC
+    1153434.355 : felscarred_student_Hunt_CA_Illum_SpB_CoB_SC_DGB
+    1142995.572 : felscarred_flamebound_Hunt_CA_Illum_SpB_StF_CoB_SC
+    1142716.057 : felscarred_flamebound_CA_SOS_Illum_SpB_StF_CoB_DGB
+    1139490.751 : felscarred_flamebound_Hunt_SOS_Illum_SpB_StF_CoB_DGB
+    1132222.815 : felscarred_student_Hunt_SOS_Illum_SpB_CoB_SC_DGB
+    1127534.469 : felscarred_flamebound_Hunt_CA_Illum_SpB_CoB_SC_DGB
+    1126785.595 : felscarred_student_CA_SOS_Illum_SpB_CoB_SC_DGB
+    1125812.316 : felscarred_flamebound_Hunt_SOS_Illum_SpB_StF_CoB_SC
+    1113562.642 : felscarred_flamebound_CA_SOS_Illum_SpB_StF_CoB_SC
+    1099137.721 : felscarred_flamebound_Hunt_SOS_Illum_SpB_CoB_SC_DGB
+    1095583.800 : felscarred_flamebound_CA_SOS_Illum_SpB_CoB_SC_DGB
+    1068247.098 : felscarred_student_Hunt_CA_DiF_SpB_StF_CoB_DGB
+    1055614.094 : felscarred_student_CA_SOS_DiF_SpB_StF_CoB_DGB
+    1052697.887 : felscarred_student_Hunt_SOS_DiF_SpB_StF_CoB_DGB
+    1050189.681 : felscarred_student_Hunt_CA_DiF_SpB_StF_CoB_SC
+    1047668.068 : felscarred_flamebound_Hunt_CA_DiF_SpB_StF_CoB_DGB
+    1036384.773 : felscarred_student_Hunt_CA_DiF_SpB_CoB_SC_DGB
+    1030815.771 : felscarred_student_Hunt_SOS_DiF_SpB_StF_CoB_SC
+    1030348.016 : felscarred_flamebound_CA_SOS_DiF_SpB_StF_CoB_DGB
+    1025879.989 : felscarred_flamebound_Hunt_SOS_DiF_SpB_StF_CoB_DGB
+    1024639.784 : felscarred_student_CA_SOS_DiF_SpB_StF_CoB_SC
+    1020860.934 : felscarred_flamebound_Hunt_CA_DiF_SpB_StF_CoB_SC
+    1013869.801 : felscarred_flamebound_Hunt_SOS_DiF_SpB_StF_CoB_SC
+    1009920.481 : felscarred_student_CA_SOS_DiF_SpB_CoB_SC_DGB
+    1009518.065 : felscarred_flamebound_Hunt_CA_DiF_SpB_CoB_SC_DGB
+    1005863.862 : felscarred_student_Hunt_SOS_DiF_SpB_CoB_SC_DGB
+    1005369.720 : felscarred_flamebound_CA_SOS_DiF_SpB_StF_CoB_SC
+    990882.630 : felscarred_flamebound_CA_SOS_DiF_SpB_CoB_SC_DGB
+    986107.213 : felscarred_flamebound_Hunt_SOS_DiF_SpB_CoB_SC_DGB
+    879257.923 : felscarred_student_Hunt_CA_Illum_NoSpB_StF_BA_DGB
+    865614.176 : felscarred_student_Hunt_SOS_Illum_NoSpB_StF_BA_DGB
+    861120.866 : felscarred_student_CA_SOS_Illum_NoSpB_StF_BA_DGB
+    859015.948 : felscarred_student_Hunt_CA_Illum_NoSpB_StF_BA_SC
+    856648.037 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_StF_BA_DGB
+    849438.381 : felscarred_student_Hunt_CA_Illum_NoSpB_StF_BA_CoB
+    849372.012 : felscarred_student_Hunt_SOS_Illum_NoSpB_StF_BA_SC
+    846890.855 : felscarred_student_Hunt_CA_Illum_NoSpB_BA_SC_DGB
+    845512.325 : felscarred_student_Hunt_SOS_Illum_NoSpB_StF_BA_CoB
+    844803.294 : felscarred_flamebound_CA_SOS_Illum_NoSpB_StF_BA_DGB
+    844593.516 : felscarred_student_CA_SOS_Illum_NoSpB_StF_BA_SC
+    841456.730 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_StF_BA_DGB
+    841048.727 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_StF_BA_CoB
+    839097.736 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_StF_BA_SC
+    837248.666 : felscarred_student_Hunt_CA_Illum_NoSpB_BA_CoB_DGB
+    832024.376 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_StF_BA_CoB
+    831723.618 : felscarred_student_CA_SOS_Illum_NoSpB_BA_SC_DGB
+    831603.668 : felscarred_student_Hunt_CA_Illum_NoSpB_BA_CoB_SC
+    829414.135 : felscarred_student_CA_SOS_Illum_NoSpB_StF_BA_CoB
+    829410.814 : felscarred_student_Hunt_SOS_Illum_NoSpB_BA_SC_DGB
+    828575.957 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_BA_SC_DGB
+    824307.657 : felscarred_flamebound_CA_SOS_Illum_NoSpB_StF_BA_SC
+    822262.570 : felscarred_student_Hunt_SOS_Illum_NoSpB_BA_CoB_DGB
+    820829.441 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_StF_BA_SC
+    819166.863 : felscarred_student_CA_SOS_Illum_NoSpB_BA_CoB_DGB
+    818711.926 : felscarred_student_Hunt_SOS_Illum_NoSpB_BA_CoB_SC
+    816957.231 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_BA_CoB_DGB
+    815463.275 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_BA_CoB_SC
+    813736.329 : felscarred_flamebound_CA_SOS_Illum_NoSpB_StF_BA_CoB
+    810652.357 : felscarred_student_CA_SOS_Illum_NoSpB_BA_CoB_SC
+    805507.912 : felscarred_flamebound_CA_SOS_Illum_NoSpB_BA_SC_DGB
+    803217.711 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_BA_CoB_DGB
+    799432.025 : felscarred_flamebound_CA_SOS_Illum_NoSpB_BA_CoB_DGB
+    798329.357 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_BA_SC_DGB
+    794685.172 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_BA_CoB_SC
+    792172.212 : felscarred_student_Hunt_CA_DiF_NoSpB_StF_BA_DGB
+    789312.790 : felscarred_flamebound_CA_SOS_Illum_NoSpB_BA_CoB_SC
+    780219.158 : felscarred_student_Hunt_CA_DiF_NoSpB_StF_BA_SC
+    779972.877 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_StF_BA_DGB
+    776769.052 : felscarred_student_Hunt_CA_DiF_NoSpB_StF_BA_CoB
+    771686.955 : felscarred_student_CA_SOS_DiF_NoSpB_StF_BA_DGB
+    770109.425 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_StF_BA_SC
+    766727.893 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_StF_BA_CoB
+    764084.648 : felscarred_student_Hunt_SOS_DiF_NoSpB_StF_BA_DGB
+    759202.431 : felscarred_student_CA_SOS_DiF_NoSpB_StF_BA_SC
+    758909.788 : felscarred_student_Hunt_SOS_DiF_NoSpB_StF_BA_SC
+    758095.965 : felscarred_student_Hunt_SOS_DiF_NoSpB_StF_BA_CoB
+    757799.917 : felscarred_flamebound_CA_SOS_DiF_NoSpB_StF_BA_DGB
+    757447.067 : felscarred_student_CA_SOS_DiF_NoSpB_StF_BA_CoB
+    752023.952 : felscarred_flamebound_CA_SOS_DiF_NoSpB_StF_BA_SC
+    751719.580 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_StF_BA_DGB
+    749399.019 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_StF_BA_SC
+    747375.824 : felscarred_flamebound_CA_SOS_DiF_NoSpB_StF_BA_CoB
+    746003.284 : felscarred_student_Hunt_CA_DiF_NoSpB_BA_SC_DGB
+    742856.688 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_StF_BA_CoB
+    742690.812 : felscarred_student_Hunt_CA_DiF_NoSpB_BA_CoB_DGB
+    736762.494 : felscarred_student_Hunt_CA_DiF_NoSpB_BA_CoB_SC
+    734717.896 : felscarred_student_Hunt_CA_Illum_NoSpB_StF_CoB_DGB
+    734432.301 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_BA_SC_DGB
+    730476.937 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_BA_CoB_DGB
+    729580.499 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_BA_CoB_SC
+    728684.068 : felscarred_student_CA_SOS_DiF_NoSpB_BA_SC_DGB
+    725387.546 : felscarred_student_Hunt_CA_Illum_NoSpB_StF_CoB_SC
+    725253.142 : felscarred_student_CA_SOS_DiF_NoSpB_BA_CoB_DGB
+    721935.159 : felscarred_student_Hunt_SOS_DiF_NoSpB_BA_SC_DGB
+    721061.897 : felscarred_student_CA_SOS_DiF_NoSpB_BA_CoB_SC
+    718754.454 : felscarred_student_Hunt_SOS_Illum_NoSpB_StF_CoB_DGB
+    716847.779 : felscarred_flamebound_CA_SOS_DiF_NoSpB_BA_CoB_DGB
+    715669.259 : felscarred_flamebound_CA_SOS_DiF_NoSpB_BA_SC_DGB
+    715418.278 : felscarred_student_CA_SOS_Illum_NoSpB_StF_CoB_DGB
+    714290.195 : felscarred_student_Hunt_SOS_DiF_NoSpB_BA_CoB_DGB
+    713595.863 : felscarred_student_Hunt_SOS_DiF_NoSpB_BA_CoB_SC
+    712515.783 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_StF_CoB_DGB
+    711659.102 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_BA_SC_DGB
+    711317.489 : felscarred_flamebound_CA_SOS_DiF_NoSpB_BA_CoB_SC
+    711208.398 : felscarred_student_Hunt_SOS_Illum_NoSpB_StF_CoB_SC
+    709285.003 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_BA_CoB_SC
+    707882.741 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_StF_CoB_SC
+    706084.118 : felscarred_student_CA_SOS_Illum_NoSpB_StF_CoB_SC
+    704453.792 : felscarred_student_Hunt_CA_Illum_NoSpB_CoB_SC_DGB
+    703425.584 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_StF_CoB_DGB
+    702122.526 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_BA_CoB_DGB
+    697414.363 : felscarred_flamebound_CA_SOS_Illum_NoSpB_StF_CoB_DGB
+    695402.909 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_StF_CoB_SC
+    690052.989 : felscarred_flamebound_CA_SOS_Illum_NoSpB_StF_CoB_SC
+    688430.116 : felscarred_student_Hunt_SOS_Illum_NoSpB_CoB_SC_DGB
+    687538.460 : felscarred_student_CA_SOS_Illum_NoSpB_CoB_SC_DGB
+    683890.661 : felscarred_flamebound_Hunt_CA_Illum_NoSpB_CoB_SC_DGB
+    673159.943 : felscarred_flamebound_Hunt_SOS_Illum_NoSpB_CoB_SC_DGB
+    668731.602 : felscarred_flamebound_CA_SOS_Illum_NoSpB_CoB_SC_DGB
+    620448.819 : felscarred_student_Hunt_CA_DiF_NoSpB_StF_CoB_DGB
+    606024.513 : felscarred_student_Hunt_CA_DiF_NoSpB_StF_CoB_SC
+    605669.105 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_StF_CoB_DGB
+    599025.601 : felscarred_student_CA_SOS_DiF_NoSpB_StF_CoB_DGB
+    598595.847 : felscarred_student_Hunt_SOS_DiF_NoSpB_StF_CoB_DGB
+    595802.778 : felscarred_student_Hunt_SOS_DiF_NoSpB_StF_CoB_SC
+    595358.553 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_StF_CoB_SC
+    589390.750 : felscarred_flamebound_CA_SOS_DiF_NoSpB_StF_CoB_DGB
+    589277.662 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_StF_CoB_DGB
+    586103.420 : felscarred_student_CA_SOS_DiF_NoSpB_StF_CoB_SC
+    583257.090 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_StF_CoB_SC
+    582115.183 : felscarred_student_Hunt_CA_DiF_NoSpB_CoB_SC_DGB
+    579979.862 : felscarred_flamebound_CA_SOS_DiF_NoSpB_StF_CoB_SC
+    573441.948 : felscarred_flamebound_Hunt_CA_DiF_NoSpB_CoB_SC_DGB
+    567282.986 : felscarred_student_Hunt_SOS_DiF_NoSpB_CoB_SC_DGB
+    563822.425 : felscarred_student_CA_SOS_DiF_NoSpB_CoB_SC_DGB
+    559639.243 : felscarred_flamebound_Hunt_SOS_DiF_NoSpB_CoB_SC_DGB
+    556687.423 : felscarred_flamebound_CA_SOS_DiF_NoSpB_CoB_SC_DGB
 
 
 Baseline Performance:
   Networking    = enabled
   RNG Engine    = xoshiro256+
-  Iterations    = 5011 (390, 407, 433, 391, 416, 421, 398, 443, 425, 421, 444, 422)
-  TotalEvents   = 74932873
-  MaxEventQueue = 145
-  TargetHealth  = 121014035
-  SimSeconds    = 1500513.798
-  CpuSeconds    = 21.677368
-  WallSeconds   = 2.0202705
-  InitSeconds   = 0.005273708
-  MergeSeconds  = 0.0017342100000000001
-  AnalyzeSeconds= 0.024679250000000003
-  SpeedUp       = 69386
-  EndTime       = 2024-06-30 22:07:38-0700 (1719810458)
+  Iterations    = 1011 (82, 107, 87, 90, 75, 58, 100, 91, 69, 120, 57, 75)
+  TotalEvents   = 834481127
+  MaxEventQueue = 33
+  TargetHealth  = 1993538
+  SimSeconds    = 60528.517
+  CpuSeconds    = 328.630559
+  WallSeconds   = 32.196206125
+  InitSeconds   = 0.933614044
+  MergeSeconds  = 0.324418382
+  AnalyzeSeconds= 0.28901316600000004
+  SpeedUp       = 186
+  EndTime       = 2024-07-06 13:51:09-0700 (1720299069)
 
 
 Waiting:
-    All players active 100% of the time.
+    97.88% : Base
 
