@@ -1,5 +1,6 @@
 import os
 import re
+from collections import defaultdict
 
 def format_number(num):
     if num >= 1000000:
@@ -40,17 +41,42 @@ def extract_filename_info(filename):
         targets = int(match.group(1))
         time = int(match.group(2))
         return f"{targets}T {time}s", targets
-    return filename, 0
+    print(f"Warning: Couldn't extract target and time info from filename: {filename}")
+    return None, None
 
 def get_color(value, min_val, max_val):
     ratio = (value - min_val) / (max_val - min_val)
-    # Shades of green that are easier to read
     colors = [
         "#f0f9f0", "#e1f3e1", "#d2eed2", "#c3e8c3", "#b4e2b4",
         "#a5dca5", "#96d696", "#87d087", "#78ca78", "#69c469"
     ]
     index = min(int(ratio * (len(colors) - 1)), len(colors) - 1)
     return colors[index]
+
+def calculate_ranks(summaries):
+    ranks = defaultdict(dict)
+    all_profiles = set()
+    for summary in summaries.values():
+        all_profiles.update(summary["data"].keys())
+
+    valid_profiles = set()
+    for profile in all_profiles:
+        if all(profile in summary["data"] for summary in summaries.values()):
+            valid_profiles.add(profile)
+
+    for target_count in summaries:
+        sorted_profiles = sorted(
+            [(profile, summaries[target_count]["data"][profile]) for profile in valid_profiles],
+            key=lambda x: x[1],
+            reverse=True
+        )
+        for rank, (profile, _) in enumerate(sorted_profiles, 1):
+            ranks[profile][target_count] = rank
+
+    return ranks, valid_profiles
+
+def calculate_average_rank(ranks):
+    return {profile: sum(ranks[profile].values()) / len(ranks[profile]) for profile in ranks}
 
 def compare_chart_data():
     summaries = {}
@@ -60,23 +86,23 @@ def compare_chart_data():
             summary = extract_chart_data(file_path)
             if summary:
                 column_name, target_count = extract_filename_info(filename)
-                summaries[column_name] = {"data": summary, "targets": target_count}
+                if column_name and target_count:
+                    if target_count not in summaries or os.path.getmtime(file_path) > summaries[target_count]["date"]:
+                        summaries[target_count] = {"data": summary, "column_name": column_name, "date": os.path.getmtime(file_path)}
 
     if not summaries:
         print("No data extracted from any files")
         return None
 
-    # Sort columns based on target count
-    sorted_columns = sorted(summaries.keys(), key=lambda x: summaries[x]["targets"])
+    sorted_columns = sorted(summaries.keys())
 
-    all_keys = set()
-    for summary in summaries.values():
-        all_keys.update(summary["data"].keys())
+    ranks, valid_profiles = calculate_ranks(summaries)
+    avg_ranks = calculate_average_rank(ranks)
 
     html = ['''
     <style>
         body { font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif; background-color: #f5f5f5; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; max-width: 800px; margin: 20px auto; box-shadow: 0 1px 3px rgba(0,0,0,0.2); background-color: #ffffff; }
+        table { border-collapse: separate; border-spacing: 0; width: 100%; max-width: 1000px; margin: 20px auto; box-shadow: 0 1px 3px rgba(0,0,0,0.2); background-color: #ffffff; }
         th, td { text-align: right; padding: 12px; border-bottom: 1px solid #e0e0e0; }
         th { background-color: #f5f5f5; color: #333333; font-weight: 500; position: sticky; top: 0; }
         td { color: #212121; }
@@ -89,24 +115,30 @@ def compare_chart_data():
     <tr><th onclick="sortTable(0)">Profile</th>
     ''']
 
-    for i, column in enumerate(sorted_columns, 1):
-        html.append(f'<th onclick="sortTable({i})">{column}</th>')
+    for i, target_count in enumerate(sorted_columns, 1):
+        html.append(f'<th onclick="sortTable({i})">{summaries[target_count]["column_name"]}</th>')
+    html.append('<th onclick="sortTable({})" style="background-color: #e8f5e9;">Avg Rank</th>'.format(len(sorted_columns) + 1))
     html.append('</tr>')
 
-    # Calculate min and max values for each column
-    column_stats = {column: {'min': min(summaries[column]["data"].values()), 'max': max(summaries[column]["data"].values())}
-                    for column in sorted_columns}
+    column_stats = {target_count: {'min': min(summaries[target_count]["data"].values()), 'max': max(summaries[target_count]["data"].values())}
+                    for target_count in sorted_columns}
 
-    for key in sorted(all_keys):
-        html.append(f'<tr><td>{key}</td>')
-        for column in sorted_columns:
-            value = summaries[column]["data"].get(key, 'N/A')
+    for profile in sorted(valid_profiles):
+        html.append(f'<tr><td>{profile}</td>')
+        for target_count in sorted_columns:
+            value = summaries[target_count]["data"].get(profile, 'N/A')
             if isinstance(value, float):
                 formatted_value = format_number(value)
-                color = get_color(value, column_stats[column]['min'], column_stats[column]['max'])
-                html.append(f'<td data-value="{value}" style="background-color: {color};">{formatted_value}</td>')
+                color = get_color(value, column_stats[target_count]['min'], column_stats[target_count]['max'])
+                rank = ranks[profile][target_count]
+                html.append(f'<td data-value="{rank}" style="background-color: {color};">{formatted_value}<br><small>(Rank: {rank})</small></td>')
             else:
                 html.append(f'<td data-value="0">N/A</td>')
+
+        # Add average rank column
+        avg_rank = avg_ranks[profile]
+        html.append(f'<td data-value="{avg_rank}" style="background-color: #e8f5e9;">{format_number(avg_rank)}</td>')
+
         html.append('</tr>')
 
     html.append('</table>')

@@ -4,7 +4,7 @@ $(small_aoe_spb_thresh_fd)=4
 $(big_aoe_spb_thresh_fd)=3
 
 # no spirit bomb in single target; 100 is to ensure threshold is never met
-$(st_spb_thresh)=100
+$(st_spb_thresh)=5
 $(small_aoe_spb_thresh)=4
 $(big_aoe_spb_thresh)=3
 

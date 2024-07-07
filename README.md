@@ -26,8 +26,11 @@ python generate_sims.py --simc <path_to_simc> --folder <path_to_simc_files> [opt
 - `--time`: Fight duration in seconds (overrides character.simc)
 - `--targettime`: List of target and time combinations for multiple simulations
 - `--hero`: Hero talents to include (default: all)
+- `--hero-exclude`: Hero talents to exclude (default: all)
 - `--class`: Class talents to include (default: all)
+- `--class-exclude`: Class talents to exclude (default: all)
 - `--spec`: Spec talents to include (default: all)
+- `--spec-exclude`: Spec talents to exclude (default: all)
 
 ## Examples
 Run all talent combinations:
