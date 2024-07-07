@@ -24,6 +24,7 @@ python generate_sims.py --simc <path_to_simc> --folder <path_to_simc_files> [opt
 ### Optional Arguments
 - `--targets`: Number of targets for the simulation (overrides character.simc)
 - `--time`: Fight duration in seconds (overrides character.simc)
+- `--targettime`: List of target and time combinations for multiple simulations
 - `--hero`: Hero talents to include (default: all)
 - `--class`: Class talents to include (default: all)
 - `--spec`: Spec talents to include (default: all)
@@ -45,6 +46,21 @@ Change fight parameters:
 
 ```
 python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --targets 3 --time 180
+```
+
+You can run multiple simulations with different target and time combinations using the `--targettime` option.
+
+Example below will run three simulations:
+1. 1 target for 300 seconds
+2. 6 targets for 60 seconds
+3. 10 targets for 60 seconds
+
+You can specify as many "targets,time" combinations as you want, separated by spaces. Each combination should be in the format "targets,time" without brackets.
+
+The script will generate separate output files for each simulation, with the corresponding target and time values included in the filename.
+
+```
+python generate_sims.py --simc /path/to/simc --folder /path/to/folder --targettime 1,300 6,60 10,60 --hero aldrachi --class hunt --spec nospb dgb
 ```
 
 ## Output

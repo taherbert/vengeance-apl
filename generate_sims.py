@@ -101,12 +101,17 @@ def parse_arguments():
     parser.add_argument('--hero', nargs='*', default=['all'], help='Hero talents to include')
     parser.add_argument('--class', dest='class_talents', nargs='*', default=['all'], help='Class talents to include')
     parser.add_argument('--spec', nargs='*', default=['all'], help='Spec talents to include')
+    parser.add_argument('--targettime', nargs='+', help='List of target and time combinations in the format "targets,time"')
     args = parser.parse_args()
 
     # If no arguments were passed, set to 'all'
     args.hero = ['all'] if not args.hero else args.hero
     args.class_talents = ['all'] if not args.class_talents else args.class_talents
     args.spec = ['all'] if not args.spec else args.spec
+
+    # Parse targettime string into a list of tuples
+    if args.targettime:
+        args.targettime = [tuple(map(int, combo.split(','))) for combo in args.targettime]
 
     return args
 
@@ -122,7 +127,6 @@ def generate_output_filename(args, character_content):
     class_talent = '_'.join(args.class_talents) if args.class_talents != ['all'] else 'all'
     spec = '_'.join(args.spec) if args.spec != ['all'] else 'all'
 
-    # Extract actual targets and time values from updated character_content
     targets = re.search(r'desired_targets=(\d+)', character_content)
     time = re.search(r'max_time=(\d+)', character_content)
 
@@ -147,11 +151,11 @@ def print_summary(talents, filtered_talents, profiles):
 
     print(f"\nTotal Profilesets Generated: {len(profiles)}")
 
-def update_character_simc(content, args):
-    if args.targets is not None:
-        content = re.sub(r'desired_targets=\d+', f'desired_targets={args.targets}', content)
-    if args.time is not None:
-        content = re.sub(r'max_time=\d+', f'max_time={args.time}', content)
+def update_character_simc(content, targets, time):
+    if targets is not None:
+        content = re.sub(r'desired_targets=\d+', f'desired_targets={targets}', content)
+    if time is not None:
+        content = re.sub(r'max_time=\d+', f'max_time={time}', content)
     return content
 
 def main(args):
@@ -167,9 +171,6 @@ def main(args):
 
     with open(character_file, 'r') as f:
         character_content = f.read()
-
-    # Update character.simc content with command-line arguments
-    character_content = update_character_simc(character_content, args)
 
     with open(profiles_file, 'r') as f:
         profiles_content = f.read()
@@ -195,20 +196,30 @@ def main(args):
 
     print_summary(talents, filtered_talents, profiles)
 
-    simc_file = create_simc_file(character_content, profiles_content, profiles)
-
-    print(f"\nCreated SimC file: {simc_file}")
-
-    html_output = generate_output_filename(args, character_content)
-    print(f"Starting SimC simulation...")
-    results = run_simc(args.simc, simc_file, html_output)
-
-    if results:
-        print("\nSimC Results:")
-        print(results)
-        print(f"HTML output saved to: {html_output}")
+    if args.targettime:
+        simulations = args.targettime
     else:
-        print("\nSimC did not produce any results.")
+        simulations = [(args.targets, args.time)]
+
+    for sim_targets, sim_time in simulations:
+        print(f"\nRunning simulation for {sim_targets} target(s) and {sim_time} seconds")
+
+        # Update character_content for this simulation
+        current_character_content = update_character_simc(character_content, sim_targets, sim_time)
+
+        simc_file = create_simc_file(current_character_content, profiles_content, profiles)
+        print(f"\nCreated SimC file: {simc_file}")
+
+        html_output = generate_output_filename(args, current_character_content)
+        print(f"Starting SimC simulation...")
+        results = run_simc(args.simc, simc_file, html_output)
+
+        if results:
+            print("\nSimC Results:")
+            print(results)
+            print(f"HTML output saved to: {html_output}")
+        else:
+            print("\nSimC did not produce any results.")
 
 if __name__ == "__main__":
     args = parse_arguments()
