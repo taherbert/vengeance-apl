@@ -1,11 +1,16 @@
-import itertools
-import subprocess
-import tempfile
 import argparse
+import functools
 import os
 import re
+import subprocess
 import sys
+import tempfile
+import time
 from datetime import datetime
+
+# Simple in-memory cache
+_profile_cache = None
+_talent_filter_cache = {}
 
 def find_simc_files(folder_path):
     character_file = os.path.join(folder_path, 'character.simc')
@@ -19,55 +24,50 @@ def find_simc_files(folder_path):
     return character_file, profiles_file
 
 def parse_profiles_simc(profiles_path):
+    global _profile_cache
+    if _profile_cache is not None:
+        return _profile_cache
+
     with open(profiles_path, 'r') as f:
         content = f.read()
 
-    talents = {
-        'hero': [],
-        'class': [],
-        'spec': []
-    }
-
+    talents = {category: {} for category in ['hero', 'class', 'spec']}
     sections = re.split(r'#\s*(Hero tree variants|Class tree variants|Spec tree variants)', content)
 
     if len(sections) != 7:
-        print("Warning: Unexpected number of sections in profile_templates.simc")
-        print(f"Number of sections: {len(sections)}")
-        return talents
+        raise ValueError(f"Unexpected number of sections in profile_templates.simc: {len(sections)}")
 
     for i, section_name in enumerate(['hero', 'class', 'spec']):
         section_content = sections[i*2 + 2]
-        talent_defs = re.findall(r'(\$\([\w_]+\)="[^"]+")$', section_content, re.MULTILINE)
-        talents[section_name].extend(talent_defs)
+        talent_defs = re.findall(r'\$\(([\w_]+)\)="([^"]+)"', section_content)
+        talents[section_name] = dict(talent_defs)
 
+    _profile_cache = talents
     return talents
 
-def generate_simc_profile(params, search_terms):
+@functools.lru_cache(maxsize=None)
+def generate_simc_profile(hero, hero_class, spec, hero_terms, hero_exclude_terms, class_terms, class_exclude_terms, spec_terms, spec_exclude_terms):
     def format_term(template, include_terms, exclude_terms):
-        if include_terms == ['all'] and not exclude_terms:
+        if include_terms == frozenset(['all']) and not exclude_terms:
             return template
-        terms = []
-        if include_terms != ['all']:
-            terms.extend([f"+{term}" for term in include_terms if term.lower() not in template.lower()])
-        terms.extend([f"-{term}" for term in exclude_terms])
-        if terms:
-            return f"{template}:{','.join(terms)}"
-        return template
+        terms = [f"+{term}" for term in include_terms if term != 'all' and term.lower() not in template.lower()]
+        terms.extend(f"-{term}" for term in exclude_terms)
+        return f"{template}:{','.join(terms)}" if terms else template
 
-    hero_term = format_term(params['hero'], search_terms['hero'], search_terms['hero_exclude'])
-    class_term = format_term(params['class'], search_terms['class'], search_terms['class_exclude'])
-    spec_term = format_term(params['spec'], search_terms['spec'], search_terms['spec_exclude'])
+    hero_term = format_term(hero, hero_terms, hero_exclude_terms)
+    class_term = format_term(hero_class, class_terms, class_exclude_terms)
+    spec_term = format_term(spec, spec_terms, spec_exclude_terms)
 
     formatted_name = f"[{hero_term}] ({class_term}) - {spec_term}"
-    return "\n".join([
+    return '\n'.join([
         f'profileset."{formatted_name}"=talents=',
-        f'profileset."{formatted_name}"+="hero_talents=$({params["hero"]})"',
-        f'profileset."{formatted_name}"+="class_talents=$({params["class"]})"',
-        f'profileset."{formatted_name}"+="spec_talents=$({params["spec"]})"'
+        f'profileset."{formatted_name}"+="hero_talents=$({hero})"',
+        f'profileset."{formatted_name}"+="class_talents=$({hero_class})"',
+        f'profileset."{formatted_name}"+="spec_talents=$({spec})"'
     ])
 
 def create_simc_file(character_content, profiles_content, profiles):
-    content = character_content + "\n\n" + profiles_content + "\n\n" + "\n\n".join(profiles)
+    content = f"{character_content}\n\n{profiles_content}\n\n" + "\n\n".join(profiles)
     with tempfile.NamedTemporaryFile(mode='w', suffix='.simc', delete=False) as temp_file:
         temp_file.write(content)
     return temp_file.name
@@ -89,15 +89,14 @@ def run_simc(simc_path, simc_file, html_output):
                 match = pattern.search(output)
                 if match:
                     current, total, remaining_time = match.groups()
-                    sys.stdout.write(f"\rGenerating profileset {current}/{total}, {remaining_time} remaining")
+                    sys.stdout.write(f"\rSimulating profile {current}/{total}, {remaining_time} remaining")
                     sys.stdout.flush()
 
-        sys.stdout.write("\n")  # New line after progress is complete
+        sys.stdout.write("\n")
         rc = process.poll()
         if rc != 0:
             print(f"SimC process exited with return code {rc}")
-            err = process.stderr.read()
-            print(f"SimC stderr output: {err}")
+            print(f"SimC stderr output: {process.stderr.read()}")
             return None
         return "SimC completed successfully"
     except subprocess.CalledProcessError as e:
@@ -120,45 +119,43 @@ def parse_arguments():
     parser.add_argument('--targettime', nargs='+', help='List of target and time combinations in the format "targets,time"')
     args = parser.parse_args()
 
-    # If no arguments were passed, set to 'all'
-    if not args.hero and not args.class_talents and not args.spec:
-        args.hero = ['all']
-        args.class_talents = ['all']
-        args.spec = ['all']
+    args.hero = set(args.hero) if args.hero else {'all'}
+    args.hero_exclude = set(args.hero_exclude)
+    args.class_talents = set(args.class_talents) if args.class_talents else {'all'}
+    args.class_talents_exclude = set(args.class_talents_exclude)
+    args.spec = set(args.spec) if args.spec else {'all'}
+    args.spec_exclude = set(args.spec_exclude)
 
-    # Parse targettime string into a list of tuples
     if args.targettime:
         args.targettime = [tuple(map(int, combo.split(','))) for combo in args.targettime]
 
     return args
 
-def filter_talents(all_talents, include_list, exclude_list):
-    if 'all' in include_list and not exclude_list:
-        return all_talents
+def filter_talents(talents, include_list, exclude_list):
+    cache_key = (frozenset(talents.items()), frozenset(include_list), frozenset(exclude_list))
+    if cache_key in _talent_filter_cache:
+        return _talent_filter_cache[cache_key]
 
     filtered_talents = []
-    for talent in all_talents:
-        talent_name, talent_content = talent.split('=')
-        talent_content = talent_content.strip('"')
-        talent_abilities = {ability.split(':')[0]: ability.split(':')[1] for ability in talent_content.split('/')}
+    for talent_name, talent_content in talents.items():
+        talent_abilities = set(ability.split(':')[0].lower() for ability in talent_content.split('/'))
 
-        include = True
-        if 'all' not in include_list:
-            include = any(term.lower() in ability.lower() and value != '0' for ability, value in talent_abilities.items() for term in include_list)
+        include = 'all' in include_list or any(term.lower() in ability for term in include_list for ability in talent_abilities)
 
         if include and exclude_list:
-            include = not any(term.lower() in ability.lower() and value != '0' for ability, value in talent_abilities.items() for term in exclude_list)
+            include = not any(term.lower() in ability for term in exclude_list for ability in talent_abilities)
 
         if include:
-            filtered_talents.append(talent)
+            filtered_talents.append((talent_name, talent_content))
 
+    _talent_filter_cache[cache_key] = filtered_talents
     return filtered_talents
 
 def generate_output_filename(args, character_content):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    hero = '_'.join(args.hero) if args.hero != ['all'] else 'all'
-    class_talent = '_'.join(args.class_talents) if args.class_talents != ['all'] else 'all'
-    spec = '_'.join(args.spec) if args.spec != ['all'] else 'all'
+    hero = '_'.join(args.hero) if args.hero != {'all'} else 'all'
+    class_talent = '_'.join(args.class_talents) if args.class_talents != {'all'} else 'all'
+    spec = '_'.join(args.spec) if args.spec != {'all'} else 'all'
 
     targets = re.search(r'desired_targets=(\d+)', character_content)
     time = re.search(r'max_time=(\d+)', character_content)
@@ -168,23 +165,24 @@ def generate_output_filename(args, character_content):
 
     return f"simc_result_{timestamp}_targets{targets}_time{time}_{hero}_{class_talent}_{spec}.html"
 
-def print_summary(talents, filtered_talents, profiles, search_terms):
+def print_summary(talents, filtered_talents, profiles, search_terms, generation_time):
     print("\nSimulation Summary:")
     print("===================")
 
     print("\nDetected Templates:")
     for category, talent_list in talents.items():
         print(f"  {category.capitalize()} talents: {len(talent_list)}")
-        print(f"    {', '.join(talent.split('=')[0].strip('$()') for talent in talent_list)}")
 
     print("\nSelected Talents:")
     for category in ['hero', 'class', 'spec']:
         print(f"  {category.capitalize()} talents: {len(filtered_talents[category])}")
-        if search_terms[category] != ['all']:
+        if search_terms[category] != {'all'}:
             print(f"    Included: {', '.join(search_terms[category])}")
-        print(f"    Excluded: {', '.join(search_terms[f'{category}_exclude'])}")
+        if search_terms[f'{category}_exclude']:
+            print(f"    Excluded: {', '.join(search_terms[f'{category}_exclude'])}")
 
     print(f"\nTotal Profilesets Generated: {len(profiles)}")
+    print(f"Time taken to generate profiles and prepare SimC execution: {generation_time:.2f} seconds")
 
 def update_character_simc(content, targets, time):
     if targets is not None:
@@ -194,21 +192,20 @@ def update_character_simc(content, targets, time):
     return content
 
 def main(args):
-    # Find and validate character.simc and profile_templates.simc
+    start_time = time.time()
+
     character_file, profiles_file = find_simc_files(args.folder)
-
-    # Parse profile_templates.simc to get talent options
-    talents = parse_profiles_simc(profiles_file)
-
-    # Validate SimC path
-    if not os.path.isfile(args.simc):
-        raise FileNotFoundError(f"SimulationCraft executable not found at: {args.simc}")
 
     with open(character_file, 'r') as f:
         character_content = f.read()
 
     with open(profiles_file, 'r') as f:
         profiles_content = f.read()
+
+    talents = parse_profiles_simc(profiles_file)
+
+    if not os.path.isfile(args.simc):
+        raise FileNotFoundError(f"SimulationCraft executable not found at: {args.simc}")
 
     filtered_talents = {
         'hero': filter_talents(talents['hero'], args.hero, args.hero_exclude),
@@ -229,39 +226,33 @@ def main(args):
         'spec_exclude': args.spec_exclude
     }
 
-    profiles = []
-    for hero_talent in filtered_talents['hero']:
-        for class_talent in filtered_talents['class']:
-            for spec_talent in filtered_talents['spec']:
-                hero_name = hero_talent.split('=')[0].strip('$()')
-                class_name = class_talent.split('=')[0].strip('$()')
-                spec_name = spec_talent.split('=')[0].strip('$()')
-                profile = generate_simc_profile({
-                    'hero': hero_name,
-                    'class': class_name,
-                    'spec': spec_name
-                }, search_terms)
-                profiles.append(profile)
+    profiles = [
+        generate_simc_profile(
+            hero_name, class_name, spec_name,
+            frozenset(args.hero), frozenset(args.hero_exclude),
+            frozenset(args.class_talents), frozenset(args.class_talents_exclude),
+            frozenset(args.spec), frozenset(args.spec_exclude)
+        )
+        for hero_name, _ in filtered_talents['hero']
+        for class_name, _ in filtered_talents['class']
+        for spec_name, _ in filtered_talents['spec']
+    ]
 
     if not profiles:
         print("Error: No valid profiles generated. Please check your talent selections.")
         return
 
-    print_summary(talents, filtered_talents, profiles, search_terms)
+    generation_time = time.time() - start_time
+    print_summary(talents, filtered_talents, profiles, search_terms, generation_time)
 
-    if args.targettime:
-        simulations = args.targettime
-    else:
-        simulations = [(args.targets, args.time)]
+    simulations = args.targettime or [(args.targets, args.time)]
 
     for sim_targets, sim_time in simulations:
-        print(f"\nRunning simulation for {sim_targets} target(s) and {sim_time} seconds")
+        print(f"\nPreparing simulation for {sim_targets} target(s) and {sim_time} seconds")
 
-        # Update character_content for this simulation
         current_character_content = update_character_simc(character_content, sim_targets, sim_time)
-
         simc_file = create_simc_file(current_character_content, profiles_content, profiles)
-        print(f"\nCreated SimC file: {simc_file}")
+        print(f"SimC input file created: {simc_file}")
 
         html_output = generate_output_filename(args, current_character_content)
         print(f"Starting SimC simulation...")
