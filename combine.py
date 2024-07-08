@@ -1,6 +1,8 @@
 import os
+import subprocess
+import argparse
 
-def combine_files(main_file, output_file):
+def combine_and_compile_files(main_file, output_file, simc_path):
     base_dir = os.path.dirname(main_file)
 
     def process_file(file_path):
@@ -8,25 +10,40 @@ def combine_files(main_file, output_file):
         with open(file_path, 'r') as infile:
             for line in infile:
                 if line.startswith('input='):
-                    # Extract filename from input line
                     filename = line.split('=')[1].strip()
-                    # Construct full path for the input file
                     full_path = os.path.join(base_dir, filename)
-                    # Recursively process the referenced file
                     content.extend(['\n'] + process_file(full_path) + ['\n'])
                 elif line.lower().startswith('# imports'):
-                    # Delete the line
                     continue
                 else:
                     content.append(line)
         return content
 
-    # Process the main file
     combined_content = process_file(main_file)
 
-    # Write the combined content to the output file
-    with open(output_file, 'w') as outfile:
+    temp_file = 'temp_combined.simc'
+    with open(temp_file, 'w') as outfile:
         outfile.writelines(combined_content)
 
-# Usage
-combine_files('vengeance/character.simc', 'vengeance_full.simc')
+    try:
+        subprocess.run([simc_path, temp_file, f'save={output_file}'], check=True)
+        print(f"Successfully compiled and saved to {output_file}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error running simc: {e}")
+    except FileNotFoundError:
+        print(f"Error: simc executable not found at {simc_path}")
+
+    os.remove(temp_file)
+
+def main():
+    parser = argparse.ArgumentParser(description='Combine and compile SimulationCraft files.')
+    parser.add_argument('simc', help='Path to the simc executable')
+    parser.add_argument('--main', default='vengeance/character.simc', help='Path to the main .simc file (default: vengeance/character.simc)')
+    parser.add_argument('--output', default='vengeance_full.simc', help='Path for the output .simc file (default: vengeance_full.simc)')
+
+    args = parser.parse_args()
+
+    combine_and_compile_files(args.main, args.output, args.simc)
+
+if __name__ == "__main__":
+    main()

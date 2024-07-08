@@ -48,18 +48,7 @@ def parse_profiles_simc(profiles_path):
 
 @functools.lru_cache(maxsize=None)
 def generate_simc_profile(hero_talents, class_talents, spec_talents, hero_terms, hero_exclude_terms, class_terms, class_exclude_terms, spec_terms, spec_exclude_terms):
-    def format_term(template, include_terms, exclude_terms):
-        if include_terms == frozenset(['all']) and not exclude_terms:
-            return template
-        terms = [f"+{term}" for term in include_terms if term != 'all' and term.lower() not in template.lower()]
-        terms.extend(f"-{term}" for term in exclude_terms)
-        return f"{template}:{','.join(terms)}" if terms else template
-
-    hero_term = format_term(hero_talents, hero_terms, hero_exclude_terms)
-    class_term = format_term(class_talents, class_terms, class_exclude_terms)
-    spec_term = format_term(spec_talents, spec_terms, spec_exclude_terms)
-
-    formatted_name = f"[{hero_term}] ({class_term}) - {spec_term}"
+    formatted_name = f"[{hero_talents}] ({class_talents}) - {spec_talents}"
     return '\n'.join([
         f'profileset."{formatted_name}"=talents=',
         f'profileset."{formatted_name}"+="hero_talents=$({hero_talents})"',
@@ -111,13 +100,14 @@ def parse_arguments():
     parser.add_argument('--folder', required=True, help='Path to folder containing character.simc and profile_templates.simc')
     parser.add_argument('--targets', type=int, default=None, help='Number of targets')
     parser.add_argument('--time', type=int, default=None, help='Fight duration in seconds')
-    parser.add_argument('--hero-talents', nargs='*', default=None, help='Hero talents to include')
+    parser.add_argument('--hero-talents', nargs='*', default=None, help='Hero talents to include. Use "aldrachi" to select talents with "art_of_the_glaive", and "felscarred" for talents with "demonsurge".')
     parser.add_argument('--hero-talents-exclude', nargs='*', default=[], help='Hero talents to exclude')
     parser.add_argument('--class-talents', nargs='*', default=None, help='Class talents to include')
     parser.add_argument('--class-talents-exclude', nargs='*', default=[], help='Class talents to exclude')
     parser.add_argument('--spec-talents', nargs='*', default=None, help='Spec talents to include')
     parser.add_argument('--spec-talents-exclude', nargs='*', default=[], help='Spec talents to exclude')
     parser.add_argument('--targettime', nargs='+', help='List of target and time combinations in the format "targets,time"')
+    parser.add_argument('--timestamp', action='store_true', help='Add timestamp to output filename to avoid overwriting')
     args = parser.parse_args()
 
     # Handle "all" cases for talents
@@ -137,8 +127,8 @@ def parse_arguments():
 
     return args
 
-def filter_talents(talents, include_list, exclude_list):
-    cache_key = (frozenset(talents.items()), frozenset(include_list), frozenset(exclude_list))
+def filter_talents(talents, include_list, exclude_list, talent_type=''):
+    cache_key = (frozenset(talents.items()), frozenset(include_list), frozenset(exclude_list), talent_type)
     if cache_key in _talent_filter_cache:
         return _talent_filter_cache[cache_key]
 
@@ -146,11 +136,15 @@ def filter_talents(talents, include_list, exclude_list):
     for talent_name, talent_content in talents.items():
         talent_abilities = set(ability.split(':')[0].lower() for ability in talent_content.split('/'))
 
-        # Include all talents if 'all' is in the include_list
         if 'all' in include_list:
             include = True
+        elif talent_type == 'hero_talents':
+            include = ('aldrachi' in include_list and 'art_of_the_glaive' in talent_content.lower()) or \
+                      ('felscarred' in include_list and 'demonsurge' in talent_content.lower()) or \
+                      any(term.lower() in ability for term in include_list for ability in talent_abilities)
         else:
-            include = any(term.lower() in ability for term in include_list for ability in talent_abilities)
+            # For spec and class talents, ensure ALL specified talents are present
+            include = all(any(term.lower() in ability for ability in talent_abilities) for term in include_list)
 
         # Apply exclusions
         if include and exclude_list:
@@ -163,18 +157,28 @@ def filter_talents(talents, include_list, exclude_list):
     return filtered_talents
 
 def generate_output_filename(args, character_content):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    hero_talents = '_'.join(args.hero_talents) if args.hero_talents != {'all'} else 'all'
-    class_talents = '_'.join(args.class_talents) if args.class_talents != {'all'} else 'all'
-    spec_talents = '_'.join(args.spec_talents) if args.spec_talents != {'all'} else 'all'
-
+    # Extract targets and time from character_content
     targets = re.search(r'desired_targets=(\d+)', character_content)
     time = re.search(r'max_time=(\d+)', character_content)
 
-    targets = targets.group(1) if targets else 'default'
-    time = time.group(1) if time else 'default'
+    targets = targets.group(1) if targets else '1'
+    time = time.group(1) if time else '300'
 
-    return f"simc_result_{timestamp}_targets{targets}_time{time}_{hero_talents}_{class_talents}_{spec_talents}.html"
+    # Determine the hero talent name (assuming only one is selected, or use the first if multiple)
+    hero_talent = next(iter(args.hero_talents)) if args.hero_talents != {'all'} else 'all'
+
+    # Create the base filename
+    filename = f"simc_{hero_talent}_{targets}T_{time}sec"
+
+    # Add timestamp if requested
+    if args.timestamp:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{filename}_{timestamp}"
+
+    # Add the file extension
+    filename = f"{filename}.html"
+
+    return filename
 
 def print_summary(talents, filtered_talents, profiles, search_terms, generation_time):
     print("\nSimulation Summary:")
@@ -235,9 +239,9 @@ def main(args):
         return
 
     filtered_talents = {
-        'hero_talents': filter_talents(talents['hero_talents'], args.hero_talents, args.hero_talents_exclude),
-        'class_talents': filter_talents(talents['class_talents'], args.class_talents, args.class_talents_exclude),
-        'spec_talents': filter_talents(talents['spec_talents'], args.spec_talents, args.spec_talents_exclude)
+        'hero_talents': filter_talents(talents['hero_talents'], args.hero_talents, args.hero_talents_exclude, 'hero_talents'),
+        'class_talents': filter_talents(talents['class_talents'], args.class_talents, args.class_talents_exclude, 'class_talents'),
+        'spec_talents': filter_talents(talents['spec_talents'], args.spec_talents, args.spec_talents_exclude, 'spec_talents')
     }
 
     if not any(filtered_talents.values()):
@@ -282,6 +286,7 @@ def main(args):
         print(f"SimC input file created: {simc_file}")
 
         html_output = generate_output_filename(args, current_character_content)
+        print(f"HTML output will be saved to: {html_output}")
         print(f"Starting SimC simulation...")
         results = run_simc(args.simc, simc_file, html_output)
 

@@ -43,6 +43,6 @@ actions+=/run_action_list,name=fs,if=hero_tree.felscarred
 actions.externals=invoke_external_buff,name=symbol_of_hope
 actions.externals+=/invoke_external_buff,name=power_infusion
 
-input=/Users/tom/Documents/GitHub/APL/vengeance/actions_aldrachi_reaver.simc
-input=/Users/tom/Documents/GitHub/APL/vengeance/actions_felscarred.simc
+input=actions_aldrachi_reaver.simc
+input=actions_felscarred.simc
 

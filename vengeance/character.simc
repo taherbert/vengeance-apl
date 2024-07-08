@@ -14,7 +14,7 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-talents=
+talents=CUkAxqeQK0B5NG0FroXuLKhPHBAYMzMjhZkZmxY2MzsNGM2mxMmxMMzMmZmtZmhZwAAAAwsMziZZmZmltZZaaGMzMDbA
 desired_targets=5
 max_time=60
 
@@ -30,7 +30,7 @@ augmentation=draconic
 temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
 
 # Imports
-input=/Users/tom/Documents/GitHub/APL/vengeance/gear.simc
-input=/Users/tom/Documents/GitHub/APL/vengeance/actions.simc
+input=gear.simc
+input=actions.simc
 # input=/Users/tom/Documents/GitHub/APL/vengeance/profile_templates.simc
 # input=/Users/tom/Documents/GitHub/APL/vengeance/manual_profiles.simc

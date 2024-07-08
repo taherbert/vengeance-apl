@@ -26,13 +26,13 @@ actions.fs+=/variable,name=can_spburst,value=soul_fragments>=variable.spburst_th
 actions.fs+=/variable,name=can_spburst_soon,value=soul_fragments.total>=variable.spburst_threshold
 actions.fs+=/variable,name=can_spburst_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spburst_threshold
 
-actions.fs+=/variable,name=dont_soul_cleave,value=((cooldown.fel_devastation.remains<=$(this_action))&fury<80)|((variable.can_spbomb|variable.can_spbomb_soon)&!buff.demonsurge_hardcast.up)|((variable.can_spburst|variable.can_spburst_soon)&buff.demonsurge_hardcast.up)
+actions.fs+=/variable,name=dont_soul_cleave,op=setif,condition=buff.metamorphosis.up&buff.demonsurge_hardcast.up,value=((cooldown.fel_desolation.remains<=$(this_action))&fury<80)|(variable.can_spburst|variable.can_spburst_soon),value_else=((cooldown.fel_devastation.remains<=$(this_action))&fury<80)|(variable.can_spbomb|variable.can_spbomb_soon)|(buff.metamorphosis.up&!buff.demonsurge_hardcast.up&buff.demonsurge_spirit_burst.up)
 
 actions.fs+=/variable,name=fiery_brand_back_before_meta,op=setif,condition=talent.down_in_flames,value=charges>=max_charges|(charges_fractional>=1&full_recharge_time<=$(this_action))|(charges_fractional>=1&((max_charges-charges_fractional)*cooldown.fiery_brand.duration)<=cooldown.metamorphosis.remains),value_else=cooldown.fiery_brand.duration<=cooldown.metamorphosis.remains
 
 actions.fs+=/immolation_aura,if=!(prev_gcd.1.sigil_of_flame&cooldown.metamorphosis.up)
 
-actions.fs+=/call_action_list,name=fel_dev,if=buff.metamorphosis.up&!buff.demonsurge_hardcast.up&!(cooldown.metamorphosis.up&!buff.demonsurge_soul_sunder.up&!buff.demonsurge_spirit_burst.up)
+actions.fs+=/call_action_list,name=fel_dev,if=buff.metamorphosis.up&!buff.demonsurge_hardcast.up&(buff.demonsurge_soul_sunder.up|buff.demonsurge_spirit_burst.up)
 actions.fs+=/call_action_list,name=metamorphosis,if=buff.metamorphosis.up&buff.demonsurge_hardcast.up
 actions.fs+=/call_action_list,name=meta_prep,if=(cooldown.metamorphosis.remains<=(gcd.max*3))&!cooldown.fel_devastation.up
 
@@ -40,13 +40,14 @@ actions.meta_prep+=/metamorphosis,use_off_gcd=1,if=cooldown.sigil_of_flame.charg
 actions.meta_prep+=/fiery_brand,if=active_dot.fiery_brand=0
 actions.meta_prep+=/sigil_of_flame
 
+actions.fel_dev+=/fracture,if=(!variable.can_spburst&!variable.can_spburst_soon)&buff.demonsurge_spirit_burst.up
 actions.fel_dev+=/spirit_burst,if=talent.spirit_bomb&(variable.can_spburst|(buff.metamorphosis.remains<$(this_action)&buff.demonsurge_spirit_burst.up))
 actions.fel_dev+=/soul_sunder,if=!variable.dont_soul_cleave|(buff.metamorphosis.remains<$(this_action)&buff.demonsurge_soul_sunder.up)
 
 actions.metamorphosis+=/call_action_list,name=externals
 actions.metamorphosis+=/potion,use_off_gcd=1
 actions.metamorphosis+=/use_items,use_off_gcd=1
-actions.metamorphosis+=/fel_devastation
+actions.metamorphosis+=/fel_desolation
 actions.metamorphosis+=/sigil_of_doom
 actions.metamorphosis+=/sigil_of_spite,if=variable.can_spburst_one_gcd
 actions.metamorphosis+=/soul_carver,if=variable.can_spburst_one_gcd&!prev_gcd.1.sigil_of_spite
@@ -57,12 +58,13 @@ actions.metamorphosis+=/spirit_burst,if=talent.spirit_bomb&(variable.can_spburst
 actions.metamorphosis+=/soul_sunder,if=!variable.dont_soul_cleave
 actions.metamorphosis+=/felblade
 actions.metamorphosis+=/fracture
-
+# TODO -- FIGURE OUT WHAT'S WRONG WITH FEL DEV, WHY ISNT IT BEING USED MORE OFTEN
 actions.fs+=/fiery_brand,if=!talent.fiery_demise|talent.fiery_demise&((talent.down_in_flames&full_recharge_time<=$(this_action))|active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta)
-actions.fs+=/fracture,if=(cooldown.fel_devastation.remains<=$(this_action))&(!(variable.can_spburst|variable.can_spburst_soon))|(fury<50&fury>=25)
+actions.fs+=/fel_devastation
+#,if=variable.can_spburst|variable.can_spburst_soon|variable.can_spburst_one_gcd
+actions.fs+=/fracture,if=(cooldown.fel_devastation.remains<=$(this_action))&((!(variable.can_spburst|variable.can_spburst_soon))|(fury<50&fury>=25))
 actions.fs+=/felblade,if=(cooldown.fel_devastation.remains<=$(this_action))&fury<50
-actions.fs+=/fel_devastation,if=variable.can_spburst|variable.can_spburst_soon
-actions.fs+=/felblade,if=cooldown.fel_devastation.remains<=(gcd.max*4)&fury.deficit>40
+actions.fs+=/felblade,if=(cooldown.fel_devastation.remains<=(gcd.max*4))&fury.deficit>40
 actions.fs+=/soul_carver,if=(cooldown.soul_carver.duration<=(cooldown.metamorphosis.remains+buff.metamorphosis.duration-(gcd.max*4)))&!variable.can_spbomb&!variable.can_spbomb_soon
 actions.fs+=/the_hunt
 actions.fs+=/sigil_of_spite,if=(cooldown.soul_carver.duration<=(cooldown.metamorphosis.remains+buff.metamorphosis.duration-(gcd.max*4)))&!variable.can_spbomb
