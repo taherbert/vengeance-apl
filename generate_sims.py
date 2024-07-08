@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from itertools import product
 
-# Simple in-memory cache
+# Global caches
 _profile_cache = None
 _talent_filter_cache = {}
 
@@ -56,15 +56,39 @@ def generate_simc_profile(hero_talents, class_talents, spec_talents, hero_terms,
         f'profileset."{formatted_name}"+="spec_talents=$({spec_talents})"'
     ])
 
-def create_simc_file(character_content, profiles_content, profiles):
-    content = f"{character_content}\n\n{profiles_content}\n\n" + "\n\n".join(profiles)
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.simc', delete=False) as temp_file:
+def create_simc_file(character_content, profiles_content, profiles, folder_path):
+    # Extract used templates
+    used_templates = set()
+    for profile in profiles:
+        used_templates.update(re.findall(r'\$\(([\w_]+)\)', profile))
+
+    # Filter profiles_content to include only used templates
+    filtered_profiles_content = []
+    for line in profiles_content.split('\n'):
+        if any(f'$({template})' in line for template in used_templates):
+            filtered_profiles_content.append(line)
+
+    content = f"{character_content}\n\n" + "\n".join(filtered_profiles_content) + "\n\n" + "\n\n".join(profiles)
+    temp_file_path = os.path.join(folder_path, "temp_simc_input.simc")
+    with open(temp_file_path, 'w') as temp_file:
         temp_file.write(content)
-    return temp_file.name
+    return temp_file_path
 
 def run_simc(simc_path, simc_file, html_output):
     try:
-        process = subprocess.Popen([simc_path, simc_file, f'html={html_output}'],
+        simc_path = os.path.abspath(simc_path)
+        simc_file = os.path.abspath(simc_file)
+        html_output = os.path.abspath(html_output)
+        simc_dir = os.path.dirname(simc_file)
+
+        original_dir = os.getcwd()
+        os.chdir(simc_dir)
+
+        if not os.path.exists(simc_path):
+            print(f"Error: SimC executable not found at {simc_path}")
+            return None
+
+        process = subprocess.Popen([simc_path, os.path.basename(simc_file), f'html={html_output}'],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
                                    universal_newlines=True)
@@ -93,6 +117,8 @@ def run_simc(simc_path, simc_file, html_output):
         print(f"Error running SimC: {e}")
         print(f"SimC stderr output: {e.stderr}")
         return None
+    finally:
+        os.chdir(original_dir)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Generate and run SimulationCraft profiles')
@@ -100,7 +126,7 @@ def parse_arguments():
     parser.add_argument('--folder', required=True, help='Path to folder containing character.simc and profile_templates.simc')
     parser.add_argument('--targets', type=int, default=None, help='Number of targets')
     parser.add_argument('--time', type=int, default=None, help='Fight duration in seconds')
-    parser.add_argument('--hero-talents', nargs='*', default=None, help='Hero talents to include. Use "aldrachi" to select talents with "art_of_the_glaive", and "felscarred" for talents with "demonsurge".')
+    parser.add_argument('--hero-talents', nargs='*', default=None, help='Hero talents to include')
     parser.add_argument('--hero-talents-exclude', nargs='*', default=[], help='Hero talents to exclude')
     parser.add_argument('--class-talents', nargs='*', default=None, help='Class talents to include')
     parser.add_argument('--class-talents-exclude', nargs='*', default=[], help='Class talents to exclude')
@@ -143,10 +169,8 @@ def filter_talents(talents, include_list, exclude_list, talent_type=''):
                       ('felscarred' in include_list and 'demonsurge' in talent_content.lower()) or \
                       any(term.lower() in ability for term in include_list for ability in talent_abilities)
         else:
-            # For spec and class talents, ensure ALL specified talents are present
             include = all(any(term.lower() in ability for ability in talent_abilities) for term in include_list)
 
-        # Apply exclusions
         if include and exclude_list:
             include = not any(term.lower() in ability for term in exclude_list for ability in talent_abilities)
 
@@ -157,25 +181,20 @@ def filter_talents(talents, include_list, exclude_list, talent_type=''):
     return filtered_talents
 
 def generate_output_filename(args, character_content):
-    # Extract targets and time from character_content
     targets = re.search(r'desired_targets=(\d+)', character_content)
     time = re.search(r'max_time=(\d+)', character_content)
 
     targets = targets.group(1) if targets else '1'
     time = time.group(1) if time else '300'
 
-    # Determine the hero talent name (assuming only one is selected, or use the first if multiple)
     hero_talent = next(iter(args.hero_talents)) if args.hero_talents != {'all'} else 'all'
 
-    # Create the base filename
     filename = f"simc_{hero_talent}_{targets}T_{time}sec"
 
-    # Add timestamp if requested
     if args.timestamp:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{filename}_{timestamp}"
 
-    # Add the file extension
     filename = f"{filename}.html"
 
     return filename
@@ -282,7 +301,7 @@ def main(args):
         print(f"\nPreparing simulation for {sim_targets} target(s) and {sim_time} seconds")
 
         current_character_content = update_character_simc(character_content, sim_targets, sim_time)
-        simc_file = create_simc_file(current_character_content, profiles_content, profiles)
+        simc_file = create_simc_file(current_character_content, profiles_content, profiles, args.folder)
         print(f"SimC input file created: {simc_file}")
 
         html_output = generate_output_filename(args, current_character_content)
@@ -296,6 +315,13 @@ def main(args):
             print(f"HTML output saved to: {html_output}")
         else:
             print("\nSimC did not produce any results.")
+
+        # Clean up the temporary file
+        try:
+            os.remove(simc_file)
+            print(f"Temporary file {simc_file} has been deleted.")
+        except OSError as e:
+            print(f"Error deleting temporary file {simc_file}: {e}")
 
 if __name__ == "__main__":
     args = parse_arguments()

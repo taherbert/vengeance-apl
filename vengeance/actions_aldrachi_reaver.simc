@@ -45,7 +45,7 @@ actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+action
 # TODO -- ADJUST EVERYTHING NOW THAT RG IS OFF GCD
 
 # We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
-actions.ar+=/reavers_glaive,use_off_gcd=1,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
+actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
 actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
 actions.ar+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=$(this_action)
 actions.ar+=/immolation_aura
