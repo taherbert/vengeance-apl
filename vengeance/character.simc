@@ -1,9 +1,11 @@
 # SimC configuration
-target_error=0.1
-iterations=1000
+target_error=0.05
+iterations=10000
 report_details=1
 single_actor_batch=1
 optimize_expressions=1
+# debug=1
+# output=log.txt
 
 # Character configuration
 demonhunter="Base"
@@ -14,13 +16,12 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
-talents=CUkAxqeQK0B5NG0FroXuLKhPHBAYMzMjhZkZmxY2MzsNGM2mxMmxMMzMmZmtZmhZwAAAAwsMziZZmZmltZZaaGMzMDbA
-desired_targets=5
-max_time=60
+talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGzmZmlxgx2MmxMmZMmxMzsNmhZwAAAAwsNDMMW2YSGMzMDLL
+
 
 # Buff configuration
 optimal_raid=1
-# override.bloodlust=0
+override.bloodlust=0
 
 # Default consumables
 potion=elemental_potion_of_ultimate_power_3

@@ -1,3 +1,7 @@
+# 2024-07-08 nerfs
+override.spell_data=effect.1137962.base_value=12
+override.spell_data=effect.1138072.base_value=20
+
 # Generic pre-combat actions
 actions.precombat=flask
 actions.precombat+=/augmentation
@@ -23,11 +27,12 @@ actions+=/variable,name=num_spawnable_souls,op=add,value=1,if=talent.soul_carver
 
 # Global Templates
 $(this_action)=gcd.remains+execute_time
-$(fd_active)=talent.fiery_demise&active_dot.fiery_brand>0
+$(fd_active)=talent.fiery_demise&dot.fiery_brand.ticking
 
 # Pre-pull actions
 actions.precombat+=/arcane_torrent
 actions.precombat+=/sigil_of_flame,if=hero_tree.aldrachi_reaver
+# TODO - WHEN FIXED |(hero_tree.felscarred&talent.student_of_suffering)
 actions.precombat+=/immolation_aura
 
 # Generic actions for both hero trees

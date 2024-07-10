@@ -14,7 +14,7 @@ actions.ar+=/variable,name=can_spb,value=soul_fragments>=variable.spb_threshold
 actions.ar+=/variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb_threshold
 actions.ar+=/variable,name=can_spb_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spb_threshold
 # We only want to check active soul fragments. We can often soul cleave while soul fragments are spawning, skipping the consumption of them.
-actions.ar+=/variable,name=dont_soul_cleave,value=soul_fragments>=2&(variable.can_spb|variable.can_spb_soon|variable.can_spb_one_gcd)
+actions.ar+=/variable,name=dont_soul_cleave,value=soul_fragments>=2&(variable.can_spb|variable.can_spb_soon|variable.can_spb_one_gcd)&!prev_gcd.1.sigil_of_spite&!prev_gcd.1.soul_carver
 
 # During Reaver's Glaive, enhance our soul cleave (1) or shear (0)
 actions.ar+=/variable,name=rg_enhance_cleave,value=0
@@ -25,6 +25,8 @@ actions.ar+=/potion,use_off_gcd=1,if=variable.cooldown_sync
 actions.ar+=/use_items,use_off_gcd=1,if=variable.cooldown_sync
 actions.ar+=/call_action_list,name=externals,if=variable.cooldown_sync
 
+actions.ar+=/immolation_aura
+actions.ar+=/sigil_of_flame,if=talent.ascending_flame|(!talent.ascending_flame&!prev_gcd.1.sigil_of_flame&(dot.sigil_of_flame.remains<(1+talent.quickened_sigils)))
 
 actions.ar+=/call_action_list,name=rg_active,if=buff.glaive_flurry.up|buff.rending_strike.up
 
@@ -47,11 +49,9 @@ actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+action
 # We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
 actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
 actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
-actions.ar+=/fiery_brand,if=active_dot.fiery_brand=0|talent.down_in_flames&full_recharge_time<=$(this_action)
-actions.ar+=/immolation_aura
+actions.ar+=/fiery_brand,if=!talent.fiery_demise|(talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0)))
 # TODO - is there really no way for fel dev to be good in ST?
 actions.ar+=/fel_devastation,if=spell_targets>=2
-actions.ar+=/sigil_of_flame,if=talent.ascending_flame|(active_dot.sigil_of_flame=0&!prev_gcd.1.sigil_of_flame)
 actions.ar+=/sigil_of_spite
 actions.ar+=/soul_carver,if=dot.fiery_brand.ticking&((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
 actions.ar+=/bulk_extraction,if=spell_targets>=3
