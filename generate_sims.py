@@ -120,10 +120,17 @@ def run_simc(simc_path, simc_file, html_output, profile_names):
             print(f"SimC process exited with return code {rc}")
             print(f"SimC stderr output: {process.stderr.read()}")
             return None
+
+        # Update the HTML title
+        update_html_title(html_output)
+
         return "SimC completed successfully"
     except subprocess.CalledProcessError as e:
         print(f"Error running SimC: {e}")
         print(f"SimC stderr output: {e.stderr}")
+        return None
+    except FileNotFoundError:
+        print(f"Error: simc executable not found at {simc_path}")
         return None
     finally:
         os.chdir(original_dir)
@@ -131,6 +138,20 @@ def run_simc(simc_path, simc_file, html_output, profile_names):
             os.remove(simc_file)
         except OSError as e:
             print(f"Error deleting temporary file {simc_file}: {e}")
+
+def update_html_title(html_file):
+    with open(html_file, 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    # Extract filename without extension
+    filename = os.path.splitext(os.path.basename(html_file))[0]
+
+    # Replace the title
+    new_content = re.sub(r'<title>SimulationCraft</title>',
+                         f'<title>{filename}</title>', content)
+
+    with open(html_file, 'w', encoding='utf-8') as file:
+        file.write(new_content)
 
 def filter_talents(talents, include_list, exclude_list, talent_type=''):
     cache_key = (frozenset(talents.items()), frozenset(include_list), frozenset(exclude_list), talent_type)
