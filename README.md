@@ -11,76 +11,99 @@ This script generates and runs SimulationCraft profiles for World of Warcraft ch
 - Python 3.6+
 - SimulationCraft executable
 - `character.simc` and `profile_templates.simc` files for your character/spec
+- `config.ini` file for configuration
 
 ## Usage
 ```
-python generate_sims.py --simc <path_to_simc> --folder <path_to_simc_files> [options]
+python generate_sims.py <path_to_config_file>
 ```
 
-### Required Arguments
-- `--simc`: Path to the SimulationCraft executable
-- `--folder`: Path to the folder containing character.simc and profile_templates.simc
 
-### Optional Arguments
-- `--targets`: Number of targets for the simulation (overrides character.simc)
-- `--time`: Fight duration in seconds (overrides character.simc)
-- `--targettime`: List of target and time combinations for multiple simulations
-- `--hero-talents`: Hero talents to include (default: all)
-- `--hero-talents-exclude`: Hero talents to exclude (default: all)
-- `--class-talents`: Class talents to include (default: all)
-- `--class-talents-exclude`: Class talents to exclude (default: all)
-- `--spec-talents`: Spec talents to include (default: all)
-- `--spec-talents-exclude`: Spec talents to exclude (default: all)
+### Configuration File (config.ini)
+The script now uses a configuration file (config.ini) instead of command-line arguments. Here's an example of the config.ini structure:
+
+```ini
+[General]
+simc = /path/to/simc/executable
+folder = /path/to/simc/files
+single_sim = false
+timestamp = true
+
+[Simulations]
+targets = 1
+time = 300
+targettime = 1,300 5,60
+
+[TalentFilters]
+hero_talents = all
+hero_talents_exclude =
+class_talents = all
+class_talents_exclude =
+spec_talents = all
+spec_talents_exclude =
+```
+
+[General] Section
+* simc: Path to the SimulationCraft executable
+* folder: Path to the folder containing character.simc and profile_templates.simc
+* single_sim: Set to true to run a single simulation with the talent string from character.simc
+* timestamp: Set to true to include a timestamp in the output filename
+
+[Simulations] Section
+* targets: Default number of targets for the simulation
+* time: Default fight duration in seconds
+* targettime: List of target and time combinations for multiple simulations (overrides targets and time if specified)
+
+[TalentFilters] Section
+* hero_talents: Hero talents to include (default: all)
+* hero_talents_exclude: Hero talents to exclude
+* class_talents: Class talents to include (default: all)
+* class_talents_exclude: Class talents to exclude
+* spec_talents: Spec talents to include (default: all)
+* spec_talents_exclude: Spec talents to exclude
 
 ## Examples
 Run all talent combinations:
 
-```
-python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files
+```ini
+[TalentFilters]
+hero_talents = all
+class_talents = all
+spec_talents = all
 ```
 
 Run specific talent combinations:
 
-```
-python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --hero "spb dgb" --class "fot" --spec "fb"
-```
-
-Change fight parameters:
-
-```
-python generate_sims.py --simc /path/to/simc --folder /path/to/simc_files --targets 3 --time 180
+```ini
+[TalentFilters]
+hero_talents = spb dgb
+class_talents = fot
+spec_talents = fb
 ```
 
-You can run multiple simulations with different target and time combinations using the `--targettime` option.
+Run multiple simulations with different target and time combinations:
+```ini
+[Simulations]
+targettime = 1,300 6,60 10,60
 
-Example below will run three simulations:
-1. 1 target for 300 seconds
-2. 6 targets for 60 seconds
-3. 10 targets for 60 seconds
-
-You can specify as many "targets,time" combinations as you want, separated by spaces. Each combination should be in the format "targets,time" without brackets.
-
-The script will generate separate output files for each simulation, with the corresponding target and time values included in the filename.
-
-```
-python generate_sims.py --simc /path/to/simc --folder /path/to/folder --targettime 1,300 6,60 10,60 --hero aldrachi --class hunt --spec nospb dgb
+[TalentFilters]
+hero_talents = aldrachi
+class_talents = hunt
+spec_talents = nospb dgb
 ```
 
 ## Output
-The script generates an HTML file with simulation results in the current directory. The filename includes a timestamp and the simulation parameters.
-
-![CLI output](example-output.png "Example CLI output")
+The script generates an HTML file with simulation results in the current directory. The filename includes the simulation parameters and optionally a timestamp.
 
 ## Adapting for Different Specs
 To use this script for a different spec:
-
-1. Replace the contents of vengeance folder file with one for your desired spec. Possible to rename the folder to match your spec, but need to update generate_sims.py accordingly.
+1. Replace the contents of the folder containing character.simc and profile_templates.simc with files for your desired spec.
 2. Update the profile_templates.simc file with the appropriate talent options for your spec.
-3. Ensure the talent names in the --hero, --class, and --spec arguments match those in your profile_templates.simc file.
+3. Ensure the talent names in the config.ini file match those in your profile_templates.simc file.
 
 No changes to the Python script itself are necessary unless your spec requires unique handling of certain parameters.
 
 ## Notes
-- The script assumes a specific structure for the profile_templates.simc file. Ensure your file follows the expected format with sections for Hero, Class, and Spec talents (denoted by the comment `#` symbols).
-- Talent filtering is case-insensitive and requires all specified terms to be present in a talent name.
-- The script creates a temporary .simc file for the simulation, which is not automatically deleted after execution.
+* The script assumes a specific structure for the profile_templates.simc file. Ensure your file follows the expected format with sections for Hero, Class, and Spec talents (denoted by the comment # symbols).
+* Talent filtering is case-insensitive and requires all specified terms to be present in a talent name.
+* The script creates a temporary .simc file for the simulation, which is deleted after execution.
