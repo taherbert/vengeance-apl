@@ -1,8 +1,17 @@
 import os
 import subprocess
 import argparse
+import configparser
 
-def combine_and_compile_files(main_file, output_file, simc_path):
+def load_config(config_path):
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    return config
+
+def combine_and_compile_files(config):
+    main_file = os.path.join(config['General']['folder'], 'character.simc')
+    output_file = config['General'].get('output_file', 'full_character.simc')
+    simc_path = config['General']['simc']
     base_dir = os.path.dirname(main_file)
 
     def process_file(file_path):
@@ -37,13 +46,12 @@ def combine_and_compile_files(main_file, output_file, simc_path):
 
 def main():
     parser = argparse.ArgumentParser(description='Combine and compile SimulationCraft files.')
-    parser.add_argument('simc', help='Path to the simc executable')
-    parser.add_argument('--main', default='vengeance/character.simc', help='Path to the main .simc file (default: vengeance/character.simc)')
-    parser.add_argument('--output', default='vengeance_full.simc', help='Path for the output .simc file (default: vengeance_full.simc)')
+    parser.add_argument('config', help='Path to the configuration file')
 
     args = parser.parse_args()
 
-    combine_and_compile_files(args.main, args.output, args.simc)
+    config = load_config(args.config)
+    combine_and_compile_files(config)
 
 if __name__ == "__main__":
     main()
