@@ -59,9 +59,9 @@ def generate_simc_profile(hero_talents, class_talents, spec_talents):
         f'profileset."{formatted_name}"+="spec_talents=$({spec_talents})"'
     ])
 
-def create_simc_file(character_content, profiles_content, profiles, folder_path, sim_targets, sim_time):
+def create_simc_file(character_content, profiles_content, profiles, folder_path, sim_targets, sim_time, iterations=None, target_error=None):
     # Update character content with sim_targets and sim_time
-    updated_character_content = update_character_simc(character_content, sim_targets, sim_time)
+    updated_character_content = update_character_simc(character_content, sim_targets, sim_time, iterations, target_error)
 
     used_templates = set(re.findall(r'\$\(([\w_]+)\)', '\n'.join(profiles)))
     filtered_profiles_content = [line for line in profiles_content.split('\n') if any(f'$({template})' in line for template in used_templates)]
@@ -207,6 +207,14 @@ def print_summary(talents, filtered_talents, profiles, search_terms, config, sim
         for i, (targets, time) in enumerate(simulations, 1):
             print(f"    Sim {i}: {targets} target(s), {time} seconds")
 
+    iterations = config['Simulations'].get('iterations')
+    if iterations:
+        print(f"  Iterations: {iterations}")
+
+    target_error = config['Simulations'].get('target_error')
+    if target_error:
+        print(f"  Target Error: {target_error}")
+
     print("\nDetected Templates:")
     for category, talent_list in talents.items():
         print(f"  {category.capitalize()}: {len(talent_list)}")
@@ -230,7 +238,7 @@ def print_summary(talents, filtered_talents, profiles, search_terms, config, sim
 
     print(f"\nTotal Profilesets Generated: {len(profiles)}")
 
-def update_character_simc(content, targets, time):
+def update_character_simc(content, targets, time, iterations=None, target_error=None):
     content = re.sub(r'desired_targets=\d+', f'desired_targets={targets}', content)
     if 'desired_targets=' not in content:
         content += f'\ndesired_targets={targets}'
@@ -239,10 +247,22 @@ def update_character_simc(content, targets, time):
     if 'max_time=' not in content:
         content += f'\nmax_time={time}'
 
+    if iterations is not None:
+        content = re.sub(r'iterations=\d+', f'iterations={iterations}', content)
+        if 'iterations=' not in content:
+            content += f'\niterations={iterations}'
+
+    if target_error is not None:
+        content = re.sub(r'target_error=[\d.]+', f'target_error={target_error}', content)
+        if 'target_error=' not in content:
+            content += f'\ntarget_error={target_error}'
+
     return content
 
 def main(config_path):
     config = load_config(config_path)
+    iterations = config['Simulations'].get('iterations', None)
+    target_error = config['Simulations'].get('target_error', None)
 
     try:
         character_file, profiles_file = find_simc_files(config['General']['folder'])
@@ -271,7 +291,7 @@ def main(config_path):
         html_output = generate_output_filename(config, sim_targets, sim_time)
         temp_file_path = os.path.join(config['General']['folder'], "temp_simc_input.simc")
         with open(temp_file_path, 'w') as temp_file:
-            temp_file.write(update_character_simc(character_content, sim_targets, sim_time))
+            temp_file.write(update_character_simc(character_content, sim_targets, sim_time, iterations, target_error))
 
         print(f"Starting SimC simulation...")
         results = run_simc(config['General']['simc'], temp_file_path, html_output, ["Single Sim"])
@@ -334,7 +354,7 @@ def main(config_path):
     for sim_targets, sim_time in simulations:
         print(f"\nPreparing simulation for {sim_targets} target(s) and {sim_time} seconds")
 
-        simc_file, profile_names = create_simc_file(character_content, profiles_content, profiles, config['General']['folder'], sim_targets, sim_time)
+        simc_file, profile_names = create_simc_file(character_content, profiles_content, profiles, config['General']['folder'], sim_targets, sim_time, iterations, target_error)
 
         html_output = generate_output_filename(config, sim_targets, sim_time)
         print(f"HTML output will be saved to: {html_output}")

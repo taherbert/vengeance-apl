@@ -1,12 +1,12 @@
 # Soul fragment thresholds for Spirit Bomb usage
 $(st_spb_thresh_fd)=5
-$(small_aoe_spb_thresh_fd)=4
-$(big_aoe_spb_thresh_fd)=3
+$(small_aoe_spb_thresh_fd)=5
+$(big_aoe_spb_thresh_fd)=4
 
 # no spirit bomb in single target; 100 is to ensure threshold is never met
 $(st_spb_thresh)=5
-$(small_aoe_spb_thresh)=4
-$(big_aoe_spb_thresh)=3
+$(small_aoe_spb_thresh)=5
+$(big_aoe_spb_thresh)=4
 
 # Spirit Bomb conditions
 actions.ar+=/variable,name=spb_threshold,op=setif,condition=$(fd_active),value=(variable.single_target*$(st_spb_thresh_fd))+(variable.small_aoe*$(small_aoe_spb_thresh_fd))+(variable.big_aoe*$(big_aoe_spb_thresh_fd)),value_else=(variable.single_target*$(st_spb_thresh))+(variable.small_aoe*$(small_aoe_spb_thresh))+(variable.big_aoe*$(big_aoe_spb_thresh))
@@ -42,22 +42,22 @@ actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurr
 
 actions.ar+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
 # use soul cleave or spirit bomb to collect soul fragments if we are at risk of having reavers mark fall off before we can recast it
-actions.ar+=/soul_cleave,if=(debuff.reavers_mark.remains<=($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
-actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+action.reavers_glaive.execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
-# TODO -- ADJUST EVERYTHING NOW THAT RG IS OFF GCD
+actions.ar+=/soul_cleave,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
+actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
+actions.ar+=/bulk_extraction,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+(spell_targets.bulk_extraction>?5)>=30)
 
 # We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
 actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
 actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
 actions.ar+=/fiery_brand,if=!talent.fiery_demise|(talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0)))
-# TODO - is there really no way for fel dev to be good in ST?
-actions.ar+=/fel_devastation,if=spell_targets>=2
-actions.ar+=/sigil_of_spite
-actions.ar+=/soul_carver,if=dot.fiery_brand.ticking&((soul_fragments.total+3)>=variable.spb_threshold)&!prev_gcd.1.sigil_of_spite
+actions.ar+=/fel_devastation,if=spell_targets>=2&!variable.can_spb
 actions.ar+=/bulk_extraction,if=spell_targets>=3
+actions.ar+=/sigil_of_spite,if=variable.can_spb|soul_fragments.total<=2
+actions.ar+=/felblade,if=!variable.can_spb&variable.can_spb_soon
+actions.ar+=/spirit_bomb,if=variable.can_spb
+actions.ar+=/soul_carver,if=!prev_gcd.2.sigil_of_spite
 actions.ar+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
 actions.ar+=/felblade,if=(fury<40&(variable.can_spb|variable.can_spb_soon))|fury<30
-actions.ar+=/spirit_bomb,if=variable.can_spb
 actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave&(fury>=60|fury.deficit<=30)
 actions.ar+=/fracture
 actions.ar+=/shear
