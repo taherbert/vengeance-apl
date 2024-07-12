@@ -16,12 +16,11 @@ race=night_elf
 timeofday=day
 role=tank
 position=front
+talents=
 # Felscarred
 # talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAYMzMjhZkZmxY2MzsNzgx2MmxMmhxMmZmtZmhZwAAAAAsYWMjhZRTDMzMDbb
 # Aldrachi
-talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGzmZmlxgx2MmxMmhZmxMzsNzMMDGAAAAmtZghxyGTygZmBLL
-desired_targets=1
-max_time=300
+# talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGzmZmlxgx2MmxMmhZmxMzsNzMMDGAAAAmtZghxyGTygZmBLL
 
 
 # Buff configuration
@@ -38,5 +37,5 @@ temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
 # Imports
 input=gear.simc
 input=actions.simc
-# input=/Users/tom/Documents/GitHub/APL/vengeance/profile_templates.simc
-# input=/Users/tom/Documents/GitHub/APL/vengeance/manual_profiles.simc
+# input=profile_templates.simc
+# input=manual_profiles.simc
