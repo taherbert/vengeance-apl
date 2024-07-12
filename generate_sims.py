@@ -343,7 +343,19 @@ def main(config_path):
         return
 
     if 'targettime' in config['Simulations']:
-        simulations = [tuple(map(int, combo.split(','))) for combo in config['Simulations']['targettime'].split()]
+        targettime = config['Simulations']['targettime'].strip()
+        if targettime:
+            simulations = [tuple(map(int, combo.split(','))) for combo in targettime.split() if combo.strip()]
+            if not simulations:
+                print("Warning: No valid target-time combinations found in config. Using default values.")
+                targets = config['Simulations'].getint('targets', fallback=1)
+                time = config['Simulations'].getint('time', fallback=300)
+                simulations = [(targets, time)]
+        else:
+            print("Warning: Empty targettime in config. Using default values.")
+            targets = config['Simulations'].getint('targets', fallback=1)
+            time = config['Simulations'].getint('time', fallback=300)
+            simulations = [(targets, time)]
     else:
         targets = config['Simulations'].getint('targets', fallback=1)
         time = config['Simulations'].getint('time', fallback=300)

@@ -38,6 +38,9 @@ actions+=/variable,name=num_spawnable_souls,op=max,value=3,if=talent.soul_carver
 actions+=/variable,name=num_spawnable_souls,op=add,value=1,if=talent.soul_carver&(cooldown.soul_carver.remains>(cooldown.soul_carver.duration-3))
 actions+=/auto_attack
 actions+=/retarget_auto_attack,line_cd=1,target_if=min:debuff.reavers_mark.remains,if=hero_tree.aldrachi_reaver
+actions+=/disrupt,if=target.debuff.casting.react
+actions+=/infernal_strike,use_off_gcd=1
+actions+=/demon_spikes,use_off_gcd=1,if=!buff.demon_spikes.up&!cooldown.pause_action.remains
 actions+=/run_action_list,name=ar,if=hero_tree.aldrachi_reaver
 actions+=/run_action_list,name=fs,if=hero_tree.felscarred
 
