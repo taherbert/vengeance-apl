@@ -166,7 +166,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row.build}</td>
-                    <td data-value="${row.overall_rank}">${row.overall_rank}</td>
+                    <td data-value="${row.overall_rank}">${formatNumber(row.overall_rank)}</td>
                     ${reportTypes.map(type =>
                         `<td data-value="${row.metrics[type]}">${formatNumber(row.metrics[type])}</td>`
                     ).join('')}
@@ -174,16 +174,16 @@
                 tbody.appendChild(tr);
             });
 
-            updateColors(data);  // Pass the filtered data to updateColors
+            updateColors(data);
         }
 
         function formatNumber(num) {
             if (num >= 1000000) {
-                return (num / 1000000).toFixed(1) + 'M';
+                return (num / 1000000).toFixed(2) + 'M';
             } else if (num >= 1000) {
-                return (num / 1000).toFixed(1) + 'K';
+                return (num / 1000).toFixed(2) + 'K';
             }
-            return num.toFixed(1);
+            return num.toFixed(2);
         }
 
         function sortTable(n) {

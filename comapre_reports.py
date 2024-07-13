@@ -81,12 +81,12 @@ def generate_html(data, report_types):
     json_data = []
     for build, build_data in data.items():
         entry = {
-            'build': format_build_name(build),  # New function to format build name
+            'build': format_build_name(build),
             'hero_talent': build_data['hero_talent'],
             'class_talents': build_data['class_talents'],
             'spec_talents': build_data['spec_talents'],
             'overall_rank': overall_ranks[build],
-            'metrics': {rt: build_data.get(rt, 0) for rt in report_types}
+            'metrics': {rt: round(build_data.get(rt, 0), 2) for rt in report_types}  # Round to 2 decimal places
         }
         json_data.append(entry)
 
@@ -262,7 +262,7 @@ def generate_html(data, report_types):
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row.build}</td>
-                    <td data-value="${row.overall_rank}">${row.overall_rank}</td>
+                    <td data-value="${row.overall_rank}">${formatNumber(row.overall_rank)}</td>
                     ${reportTypes.map(type =>
                         `<td data-value="${row.metrics[type]}">${formatNumber(row.metrics[type])}</td>`
                     ).join('')}
@@ -270,16 +270,16 @@ def generate_html(data, report_types):
                 tbody.appendChild(tr);
             });
 
-            updateColors(data);  // Pass the filtered data to updateColors
+            updateColors(data);
         }
 
         function formatNumber(num) {
             if (num >= 1000000) {
-                return (num / 1000000).toFixed(1) + 'M';
+                return (num / 1000000).toFixed(2) + 'M';
             } else if (num >= 1000) {
-                return (num / 1000).toFixed(1) + 'K';
+                return (num / 1000).toFixed(2) + 'K';
             }
-            return num.toFixed(1);
+            return num.toFixed(2);
         }
 
         function sortTable(n) {
