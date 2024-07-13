@@ -1,3 +1,4 @@
+# Ignore
 apl-wiki/
 other classes ideas/
 log.txt
@@ -6,3 +7,6 @@ log.txt
 *.xml
 *.code-workspace
 .DS_Store
+
+# Allow
+!index.html

@@ -1,206 +1,370 @@
 import os
 import re
+import json
 from collections import defaultdict
-
-def format_number(num):
-    if num >= 1000000:
-        return f"{num/1000000:.1f}M"
-    elif num >= 1000:
-        return f"{num/1000:.1f}K"
-    else:
-        return f"{num:.1f}"
 
 def extract_chart_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
-    print(f"Processing file: {file_path}")
-
     match = re.search(r'{"series":\[{"name":"Damage per Second","data":\[(.*?)\]}', content, re.DOTALL)
     if not match:
-        print("No matching data found")
         return None
 
     data_string = match.group(1)
-
     data_pattern = r'{"name":"(.*?)","reldiff":.*?,"y":([\d.]+)}'
     data_matches = re.findall(data_pattern, data_string)
 
     if not data_matches:
-        print("Failed to extract data from the matched string")
         return None
 
     result = {name: float(y) for name, y in data_matches}
-
-    print(f"Extracted data: {result}")
     return result
 
 def extract_filename_info(filename):
-    match = re.search(r'targets(\d+)_time(\d+)', filename)
+    match = re.search(r'(\d+)T_(\d+)s', filename)
     if match:
         targets = int(match.group(1))
         time = int(match.group(2))
-        return f"{targets}T {time}s", targets
-    print(f"Warning: Couldn't extract target and time info from filename: {filename}")
-    return None, None
+        return f"{targets}T {time}s"
+    return None
 
-def get_color(value, min_val, max_val):
-    ratio = (value - min_val) / (max_val - min_val)
-    colors = [
-        "#f0f9f0", "#e1f3e1", "#d2eed2", "#c3e8c3", "#b4e2b4",
-        "#a5dca5", "#96d696", "#87d087", "#78ca78", "#69c469"
-    ]
-    index = min(int(ratio * (len(colors) - 1)), len(colors) - 1)
-    return colors[index]
+def parse_build_name(build_name):
+    hero_match = re.search(r'\[(.*?)\]', build_name)
+    class_match = re.search(r'\((.*?)\)', build_name)
+    spec_match = build_name.split('-')[-1] if '-' in build_name else ''
 
-def calculate_ranks(summaries):
-    ranks = defaultdict(dict)
-    all_profiles = set()
-    for summary in summaries.values():
-        all_profiles.update(summary["data"].keys())
+    hero_talent = hero_match.group(1) if hero_match else ""
+    class_talents = class_match.group(1).replace('_', ', ').split(', ') if class_match else []
+    spec_talents = spec_match.split('_') if spec_match else []
 
-    valid_profiles = set()
-    for profile in all_profiles:
-        if all(profile in summary["data"] for summary in summaries.values()):
-            valid_profiles.add(profile)
+    return {
+        'hero_talent': hero_talent,
+        'class_talents': class_talents,
+        'spec_talents': spec_talents,
+        'full_name': build_name
+    }
 
-    for target_count in summaries:
-        sorted_profiles = sorted(
-            [(profile, summaries[target_count]["data"][profile]) for profile in valid_profiles],
-            key=lambda x: x[1],
-            reverse=True
-        )
-        for rank, (profile, _) in enumerate(sorted_profiles, 1):
-            ranks[profile][target_count] = rank
+def collect_data():
+    data = defaultdict(lambda: defaultdict(dict))
+    report_types = set()
 
-    return ranks, valid_profiles
-
-def calculate_average_rank(ranks):
-    return {profile: sum(ranks[profile].values()) / len(ranks[profile]) for profile in ranks}
-
-def compare_chart_data():
-    summaries = {}
     for filename in os.listdir('.'):
         if filename.endswith('.html'):
             file_path = os.path.join('.', filename)
-            summary = extract_chart_data(file_path)
-            if summary:
-                column_name, target_count = extract_filename_info(filename)
-                if column_name and target_count:
-                    if target_count not in summaries or os.path.getmtime(file_path) > summaries[target_count]["date"]:
-                        summaries[target_count] = {"data": summary, "column_name": column_name, "date": os.path.getmtime(file_path)}
+            report_type = extract_filename_info(filename)
+            if report_type:
+                report_types.add(report_type)
+                chart_data = extract_chart_data(file_path)
+                if chart_data:
+                    for build_name, value in chart_data.items():
+                        build_info = parse_build_name(build_name)
+                        data[build_info['full_name']][report_type] = value
+                        data[build_info['full_name']].update(build_info)
 
-    if not summaries:
-        print("No data extracted from any files")
-        return None
+    return data, sorted(report_types, key=lambda x: (int(x.split('T')[0]), int(x.split()[1][:-1])))
 
-    sorted_columns = sorted(summaries.keys())
+def calculate_overall_rank(data, report_types):
+    overall_scores = {}
+    for build, build_data in data.items():
+        scores = [build_data.get(report_type, 0) for report_type in report_types]
+        overall_scores[build] = sum(scores) / len(scores)
 
-    ranks, valid_profiles = calculate_ranks(summaries)
-    avg_ranks = calculate_average_rank(ranks)
+    sorted_builds = sorted(overall_scores.items(), key=lambda x: x[1], reverse=True)
+    overall_ranks = {build: rank + 1 for rank, (build, _) in enumerate(sorted_builds)}
 
-    html = ['''
-    <style>
-        body { font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif; background-color: #f5f5f5; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; max-width: 1000px; margin: 20px auto; box-shadow: 0 1px 3px rgba(0,0,0,0.2); background-color: #ffffff; }
-        th, td { text-align: right; padding: 12px; border-bottom: 1px solid #e0e0e0; }
-        th { background-color: #f5f5f5; color: #333333; font-weight: 500; position: sticky; top: 0; }
-        td { color: #212121; }
-        th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background-color: #ffffff; }
-        tr:nth-child(even) { background-color: #fafafa; }
-        tr:hover { background-color: #f1f8e9; }
-        th:hover { cursor: pointer; background-color: #e8e8e8; }
-    </style>
-    <table id="dataTable">
-    <tr><th onclick="sortTable(0)">Profile</th>
-    ''']
+    return overall_ranks
 
-    for i, target_count in enumerate(sorted_columns, 1):
-        html.append(f'<th onclick="sortTable({i})">{summaries[target_count]["column_name"]}</th>')
-    html.append('<th onclick="sortTable({})" style="background-color: #e8f5e9;">Avg Rank</th>'.format(len(sorted_columns) + 1))
-    html.append('</tr>')
+def generate_html(data, report_types):
+    overall_ranks = calculate_overall_rank(data, report_types)
 
-    column_stats = {target_count: {'min': min(summaries[target_count]["data"].values()), 'max': max(summaries[target_count]["data"].values())}
-                    for target_count in sorted_columns}
+    json_data = []
+    for build, build_data in data.items():
+        entry = {
+            'build': format_build_name(build),  # New function to format build name
+            'hero_talent': build_data['hero_talent'],
+            'class_talents': build_data['class_talents'],
+            'spec_talents': build_data['spec_talents'],
+            'overall_rank': overall_ranks[build],
+            'metrics': {rt: build_data.get(rt, 0) for rt in report_types}
+        }
+        json_data.append(entry)
 
-    for profile in sorted(valid_profiles):
-        html.append(f'<tr><td>{profile}</td>')
-        for target_count in sorted_columns:
-            value = summaries[target_count]["data"].get(profile, 'N/A')
-            if isinstance(value, float):
-                formatted_value = format_number(value)
-                color = get_color(value, column_stats[target_count]['min'], column_stats[target_count]['max'])
-                rank = ranks[profile][target_count]
-                html.append(f'<td data-value="{rank}" style="background-color: {color};">{formatted_value}<br><small>(Rank: {rank})</small></td>')
-            else:
-                html.append(f'<td data-value="0">N/A</td>')
+    json_data.sort(key=lambda x: x['overall_rank'])
 
-        # Add average rank column
-        avg_rank = avg_ranks[profile]
-        html.append(f'<td data-value="{avg_rank}" style="background-color: #e8f5e9;">{format_number(avg_rank)}</td>')
+    table_headers = ''.join([f'<th onclick="sortTable({i+2})">{rt}</th>' for i, rt in enumerate(report_types)])
 
-        html.append('</tr>')
-
-    html.append('</table>')
-
-    # Add JavaScript for sorting (unchanged)
-    html.append('''
-    <script>
-    function sortTable(n) {
-        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-        table = document.getElementById("dataTable");
-        switching = true;
-        dir = "asc";
-        while (switching) {
-            switching = false;
-            rows = table.rows;
-            for (i = 1; i < (rows.length - 1); i++) {
-                shouldSwitch = false;
-                x = rows[i].getElementsByTagName("TD")[n];
-                y = rows[i + 1].getElementsByTagName("TD")[n];
-                if (dir == "asc") {
-                    if ((n == 0 && x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) ||
-                        (n != 0 && parseFloat(x.getAttribute("data-value")) > parseFloat(y.getAttribute("data-value")))) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else if (dir == "desc") {
-                    if ((n == 0 && x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) ||
-                        (n != 0 && parseFloat(x.getAttribute("data-value")) < parseFloat(y.getAttribute("data-value")))) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
+    html_template = '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>SimulationCraft Report Summary</title>
+        <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
             }
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-                switchcount++;
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            h1 {
+                color: #2c3e50;
+                margin-bottom: 20px;
+            }
+            #filters {
+                margin-bottom: 20px;
+            }
+            .filter-section {
+                background-color: #fff;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+            button {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+            button:hover {
+                background-color: #2980b9;
+            }
+            .filter-content {
+                display: none;
+                margin-top: 10px;
+            }
+            .filter-content label {
+                display: block;
+                margin-bottom: 5px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                background-color: #fff;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            th, td {
+                text-align: left;
+                padding: 12px;
+                border-bottom: 1px solid #ddd;
+            }
+            th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            th:hover {
+                background-color: #e8e8e8;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            tr:hover {
+                background-color: #f5f5f5;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>SimulationCraft Report Summary</h1>
+            <div id="filters"></div>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">Build</th>
+                        <th onclick="sortTable(1)">Overall Rank</th>
+                        $TABLE_HEADERS
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table rows will be populated by the script -->
+                </tbody>
+            </table>
+        </div>
+
+        <script>
+        const rawData = $JSON_DATA;
+        const reportTypes = $REPORT_TYPES;
+
+        function generateFilterHTML() {
+            const filters = {
+                heroTalent: new Set(rawData.map(d => d.hero_talent)),
+                classTalents: new Set(rawData.flatMap(d => d.class_talents)),
+                specTalents: new Set(rawData.flatMap(d => d.spec_talents))
+            };
+
+            const filterContainer = document.getElementById('filters');
+            filterContainer.innerHTML = '';
+
+            const filterNames = {
+                heroTalent: 'Hero Talent',
+                classTalents: 'Class Talents',
+                specTalents: 'Spec Talents'
+            };
+
+            for (const [filterType, filterSet] of Object.entries(filters)) {
+                const section = document.createElement('div');
+                section.className = 'filter-section';
+                section.innerHTML = `
+                    <button onclick="toggleFilter('${filterType}-filter')">${filterNames[filterType]}</button>
+                    <div id="${filterType}-filter" class="filter-content" style="display:none;">
+                        ${Array.from(filterSet).map(value =>
+                            `<label><input type="checkbox" checked onchange="applyFilters()" data-filter="${filterType}" value="${value}"> ${value}</label><br>`
+                        ).join('')}
+                    </div>
+                `;
+                filterContainer.appendChild(section);
+            }
+        }
+
+        function toggleFilter(filterId) {
+            const filter = document.getElementById(filterId);
+            filter.style.display = filter.style.display === "none" ? "block" : "none";
+        }
+
+        function applyFilters() {
+            const activeFilters = {
+                heroTalent: new Set(),
+                classTalents: new Set(),
+                specTalents: new Set()
+            };
+
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                const filterType = checkbox.getAttribute('data-filter');
+                activeFilters[filterType].add(checkbox.value);
+            });
+
+            const filteredData = rawData.filter(row =>
+                (activeFilters.heroTalent.size === 0 || activeFilters.heroTalent.has(row.hero_talent)) &&
+                (activeFilters.classTalents.size === 0 || row.class_talents.every(talent => activeFilters.classTalents.has(talent))) &&
+                (activeFilters.specTalents.size === 0 || row.spec_talents.every(talent => activeFilters.specTalents.has(talent)))
+            );
+
+            updateTable(filteredData);
+        }
+
+        function updateTable(data) {
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.build}</td>
+                    <td data-value="${row.overall_rank}">${row.overall_rank}</td>
+                    ${reportTypes.map(type =>
+                        `<td data-value="${row.metrics[type]}">${formatNumber(row.metrics[type])}</td>`
+                    ).join('')}
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateColors(data);  // Pass the filtered data to updateColors
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toFixed(1);
+        }
+
+        function sortTable(n) {
+            const sortedData = [...rawData].sort((a, b) => {
+                if (n === 0) {
+                    return a.build.localeCompare(b.build);
+                } else if (n === 1) {
+                    return a.overall_rank - b.overall_rank;
+                } else {
+                    const reportType = reportTypes[n - 2];
+                    return b.metrics[reportType] - a.metrics[reportType];
+                }
+            });
+
+            const table = document.getElementById("dataTable");
+            if (table.getAttribute("data-sort-column") == n) {
+                sortedData.reverse();
+                table.removeAttribute("data-sort-column");
             } else {
-                if (switchcount == 0 && dir == "asc") {
-                    dir = "desc";
-                    switching = true;
+                table.setAttribute("data-sort-column", n);
+            }
+
+            updateTable(sortedData);
+        }
+
+        function updateColors(data) {
+            const table = document.getElementById("dataTable");
+            const rows = table.getElementsByTagName("tr");
+            const cols = rows[0].getElementsByTagName("th").length;
+
+            for (let col = 2; col < cols; col++) {
+                const reportType = reportTypes[col - 2];
+                const allValues = rawData.map(row => row.metrics[reportType]);
+                const min = Math.min(...allValues);
+                const max = Math.max(...allValues);
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cell = rows[i].cells[col];
+                    const value = parseFloat(cell.getAttribute("data-value"));
+                    cell.style.backgroundColor = getColor(value, min, max);
                 }
             }
         }
-    }
-    </script>
-    ''')
 
-    return ''.join(html)
+        function getColor(value, min, max) {
+            const ratio = (value - min) / (max - min);
+            const hue = ratio * 120;
+            return `hsl(${hue}, 80%, 90%)`;
+        }
+
+        // Initialize
+        window.onload = function() {
+            generateFilterHTML();
+            updateTable(rawData);
+        };
+        </script>
+    </body>
+    </html>
+    '''
+
+    json_data_str = json.dumps(json_data)
+    report_types_str = json.dumps(report_types)
+    html = html_template.replace('$JSON_DATA', json_data_str).replace('$REPORT_TYPES', report_types_str).replace('$TABLE_HEADERS', table_headers)
+    return html
+
+def format_build_name(build):
+    # Split the build name into parts
+    parts = build.split('-')
+
+    # Format the first part (hero and class talents)
+    first_part = parts[0].replace('_', ', ')
+
+    # Format the second part (spec talents)
+    if len(parts) > 1:
+        second_part = parts[1].replace('_', ', ')
+        return f"{first_part} - {second_part}"
+    else:
+        return first_part
 
 def main():
-    html_table = compare_chart_data()
+    data, report_types = collect_data()
+    html = generate_html(data, report_types)
 
-    if html_table:
-        with open('chart_data_comparison.html', 'w', encoding='utf-8') as f:
-            f.write('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>Chart Data Comparison</title>\n</head>\n<body>\n')
-            f.write(html_table)
-            f.write('\n</body>\n</html>')
-
-        print("Comparison table has been saved to 'chart_data_comparison.html'")
-    else:
-        print("No comparison table generated due to lack of data.")
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html)
 
 if __name__ == "__main__":
     main()
