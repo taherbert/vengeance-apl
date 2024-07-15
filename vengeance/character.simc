@@ -1,5 +1,7 @@
 # SimC configuration
-target_error=0.1
+threads=12
+profileset_work_threads=2
+target_error=0.2
 iterations=5000
 report_details=1
 single_actor_batch=1

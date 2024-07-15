@@ -17,7 +17,7 @@ actions.ar+=/variable,name=can_spb_one_gcd,value=(soul_fragments.total+variable.
 actions.ar+=/variable,name=dont_soul_cleave,value=soul_fragments>=2&(variable.can_spb|variable.can_spb_soon|variable.can_spb_one_gcd)&!prev_gcd.1.sigil_of_spite&!prev_gcd.1.soul_carver
 
 # During Reaver's Glaive, enhance our soul cleave (1) or shear (0)
-actions.ar+=/variable,name=rg_enhance_cleave,value=0
+actions.ar+=/variable,name=rg_enhance_cleave,op=setif,condition=variable.big_aoe,value=1,value_else=0
 
 # Externals, potions, trinkets when reaver's mark is up and we have thrill of the fight damage up
 actions.ar+=/variable,name=cooldown_sync,value=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
@@ -50,13 +50,14 @@ actions.ar+=/bulk_extraction,if=(debuff.reavers_mark.remains<=($(this_action)+(g
 actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
 actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
 actions.ar+=/fiery_brand,if=!talent.fiery_demise|(talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0)))
-actions.ar+=/fel_devastation,if=spell_targets>=2&!variable.can_spb
+actions.ar+=/fel_devastation,if=!variable.single_target&!variable.can_spb
 actions.ar+=/bulk_extraction,if=spell_targets>=3
 actions.ar+=/sigil_of_spite,if=variable.can_spb|soul_fragments.total<=2
 actions.ar+=/felblade,if=!variable.can_spb&variable.can_spb_soon
 actions.ar+=/spirit_bomb,if=variable.can_spb
 actions.ar+=/soul_carver,if=!prev_gcd.2.sigil_of_spite
 actions.ar+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
+actions.ar+=/fel_devastation,if=buff.thrill_of_the_fight_damage.up|(!variable.can_spb&variable.can_spb_soon)
 actions.ar+=/felblade,if=(fury<40&(variable.can_spb|variable.can_spb_soon))|fury<30
 actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave&(fury>=60|fury.deficit<=30)
 actions.ar+=/fracture

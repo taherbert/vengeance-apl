@@ -32,6 +32,7 @@ actions.fs+=/variable,name=fiery_brand_back_before_meta,op=setif,condition=talen
 
 actions.fs+=/variable,name=hold_sof,op=setif,condition=talent.student_of_suffering,value=(buff.student_of_suffering.remains>(1+talent.quickened_sigils))|(!talent.ascending_flame&(dot.sigil_of_flame.remains>(1+talent.quickened_sigils)))|prev_gcd.1.sigil_of_flame,value_else=cooldown.metamorphosis.up|(cooldown.sigil_of_flame.max_charges>1&talent.ascending_flame&((cooldown.sigil_of_flame.max_charges-(cooldown.sigil_of_flame.charges_fractional-1))*cooldown.sigil_of_flame.duration)>cooldown.metamorphosis.remains)|((prev_gcd.1.sigil_of_flame|dot.sigil_of_flame.remains>(1+talent.quickened_sigils)))
 
+ actions.fs+=/cancel_buff,name=metamorphosis,if=!buff.demonsurge_soul_sunder.up&!buff.demonsurge_spirit_burst.up&!buff.demonsurge_fel_desolation.up&!buff.demonsurge_consuming_fire.up&!buff.demonsurge_sigil_of_doom.up&cooldown.sigil_of_doom.charges<1
 actions.fs+=/immolation_aura,if=!(prev_gcd.1.sigil_of_flame&cooldown.metamorphosis.up)
 actions.fs+=/sigil_of_flame,if=!variable.hold_sof
 actions.fs+=/fiery_brand,if=!talent.fiery_demise|talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta))

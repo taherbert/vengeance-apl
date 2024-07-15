@@ -10,3 +10,4 @@ log.txt
 
 # Allow
 !index.html
+!template.html
