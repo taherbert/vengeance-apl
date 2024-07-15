@@ -51,8 +51,6 @@ h1 {
     text-align: left;
     padding: 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    vertical-align: top;
-    padding-bottom: 16px;
 }
 
 .mdc-data-table__header-cell {
@@ -198,10 +196,11 @@ h1 {
     transition: width 0.3s ease;
 }
 
-/* Miscellaneous */
+/* Sort Icon Styles */
 .sort-icon {
-    display: block;
-    margin: 4px auto 0;
+    font-size: 16px;
+    vertical-align: middle;
+    margin-left: 4px;
 }
 
 /* Filter Styles */

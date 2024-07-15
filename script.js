@@ -347,8 +347,8 @@ function sortTable(n) {
     const th = table.querySelectorAll('th')[n];
     const icon = th.querySelector('.sort-icon');
 
-    currentSortDirection = icon.textContent === 'arrow_upward' ? 'desc' : 'asc';
-    currentSortColumn = n;
+    const isAscending = icon.textContent === 'arrow_upward';
+    const newDirection = isAscending ? 'desc' : 'asc';
 
     rows.sort((a, b) => {
         let aValue, bValue;
@@ -360,16 +360,14 @@ function sortTable(n) {
             bValue = parseFloat(b.cells[n].getAttribute('data-value'));
         }
 
-        if (aValue < bValue) return currentSortDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return currentSortDirection === 'asc' ? 1 : -1;
+        if (aValue < bValue) return newDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return newDirection === 'asc' ? 1 : -1;
         return 0;
     });
 
     rows.forEach(row => tbody.appendChild(row));
 
-    // Update all icons
-    table.querySelectorAll('.sort-icon').forEach(i => i.textContent = 'arrow_downward');
-    icon.textContent = currentSortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward';
+    updateSortIndicator(n, newDirection);
 }
 
 function sortData(data) {
@@ -392,6 +390,21 @@ function sortData(data) {
         return 0;
     });
 }
+function updateSortIndicator(columnIndex, direction) {
+    const headers = document.querySelectorAll('.mdc-data-table__header-cell');
+    headers.forEach((header, index) => {
+        const icon = header.querySelector('.sort-icon');
+        if (icon) {
+            if (index === columnIndex) {
+                icon.textContent = direction === 'asc' ? 'arrow_upward' : 'arrow_downward';
+                icon.classList.add('active');
+            } else {
+                icon.textContent = 'arrow_downward';
+                icon.classList.remove('active');
+            }
+        }
+    });
+}
 
 // Initialize
 
@@ -408,12 +421,18 @@ function initializeData(rawData) {
         bestBuilds[metric] = findBestBuilds(rawData, metric);
     });
 
+    // Sort the data by 1T 300s descending
+    rawData.sort((a, b) => b.metrics['1T 300s'] - a.metrics['1T 300s']);
+
     updateTable(rawData);
 
     // Add change event listeners to checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', applyFilters);
     });
+
+    // Update sort indicator for 1T 300s
+    updateSortIndicator(reportTypes.indexOf('1T 300s') + 2, 'desc');
 }
 
 window.onload = function() {
