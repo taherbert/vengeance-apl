@@ -10,7 +10,6 @@ let bestFelscarred = {};
 const bestBuilds = {};
 
 function findBestBuilds(data, metric) {
-    console.log(`Finding best builds for ${metric}:`, data);
 
     const aldrachiBuilds = data.filter(row => row.hero_talent.toLowerCase().includes('aldrachi'));
     const felscarredBuilds = data.filter(row =>
@@ -18,9 +17,6 @@ function findBestBuilds(data, metric) {
         row.hero_talent.toLowerCase().includes('student') ||
         row.hero_talent.toLowerCase().includes('flamebound')
     );
-
-    console.log("Aldrachi builds:", aldrachiBuilds);
-    console.log("Felscarred builds:", felscarredBuilds);
 
     bestAldrachi = aldrachiBuilds.length > 0
         ? aldrachiBuilds.reduce((best, current) =>
@@ -33,9 +29,6 @@ function findBestBuilds(data, metric) {
             (current.metrics[metric] > best.metrics[metric]) ? current : best
         )
         : null;
-
-    console.log(`Best Aldrachi build for ${metric}:`, bestAldrachi);
-    console.log(`Best Felscarred build for ${metric}:`, bestFelscarred);
 
     return { bestAldrachi, bestFelscarred };
 }
@@ -51,7 +44,7 @@ function createComparisonViz(metric) {
     const felscarredValue = bestFelscarred.metrics[metric] || 0;
 
     if (aldrachiValue === 0 && felscarredValue === 0) {
-        return '<div class="comparison-viz"><span>No data for this metric</span></div>';
+        return '<div class="comparison-viz"><span>No data</span></div>';
     }
 
     let topBuild, bottomBuild, topValue, bottomValue;
@@ -67,14 +60,13 @@ function createComparisonViz(metric) {
         bottomValue = aldrachiValue;
     }
 
-    const percentageDiff = ((topValue - bottomValue) / bottomValue * 100).toFixed(2);
-    const felscarredType = bestFelscarred.hero_talent.includes('Student') ? 'Student' : 'Flamebound';
+    const percentageDiff = ((topValue - bottomValue) / bottomValue * 100).toFixed(1);
 
     return `
-        <div class="comparison-viz" title="Aldrachi: ${aldrachiValue.toFixed(2)}, Felscarred (${felscarredType}): ${felscarredValue.toFixed(2)}">
-            <div class="viz-better ${topBuild.toLowerCase()}">${topBuild}${topBuild === 'Felscarred' ? ` (${felscarredType})` : ''}</div>
-            <div class="viz-diff">does ${percentageDiff}% more damage</div>
-            <div class="viz-worse">than ${bottomBuild}${bottomBuild === 'Felscarred' ? ` (${felscarredType})` : ''}</div>
+        <div class="comparison-viz" title="${topBuild}: ${topValue.toFixed(2)}, ${bottomBuild}: ${bottomValue.toFixed(2)}">
+            <div class="viz-better ${topBuild.toLowerCase()}">${topBuild}</div>
+            <div class="viz-diff">+${percentageDiff}%</div>
+            <div class="viz-worse">vs ${bottomBuild}</div>
         </div>
     `;
 }
@@ -106,6 +98,16 @@ function calculateGlobalValues(data) {
     });
 }
 
+function createCheckboxLabel(value, filterType, className) {
+    const label = document.createElement('label');
+    label.className = `mdc-checkbox ${className}`;
+    label.innerHTML = `
+        <input type="checkbox" class="mdc-checkbox__native-control" data-filter="${filterType}" value="${value}"/>
+        <span class="mdc-checkbox__label">${value}</span>
+    `;
+    return label;
+}
+
 function generateFilterHTML() {
     const filters = {
         heroTalent: new Set(rawData.map(d => d.hero_talent)),
@@ -113,36 +115,75 @@ function generateFilterHTML() {
         specTalents: new Set(rawData.flatMap(d => d.spec_talents))
     };
 
-    const filterContainer = document.getElementById('filters');
-    filterContainer.innerHTML = '';
+    const heroTalentFilters = document.getElementById('heroTalentFilters');
+    const classTalentFilters = document.getElementById('classTalentFilters');
+    const specTalentFilters = document.getElementById('specTalentFilters');
 
-    const filterNames = {
-        heroTalent: 'Hero Talent',
-        classTalents: 'Class Talents',
-        specTalents: 'Spec Talents'
-    };
-
-    for (const [filterType, filterSet] of Object.entries(filters)) {
-        const section = document.createElement('div');
-        section.className = 'filter-section';
-        let filterHTML = `<h3>${filterNames[filterType]}</h3><div class="filter-options ${filterType === 'specTalents' ? 'two-column' : ''}">`;
-
-        Array.from(filterSet).forEach(value => {
-            filterHTML += `
-                <label class="mdc-checkbox">
-                    <input type="checkbox" class="mdc-checkbox__native-control" checked data-filter="${filterType}" value="${value}"/>
-                    <span class="mdc-checkbox__label">${value}</span>
-                </label>`;
+    if (heroTalentFilters && classTalentFilters && specTalentFilters) {
+        // Generate Hero Talent filters
+        filters.heroTalent.forEach(value => {
+            const label = createCheckboxLabel(value, 'heroTalent', 'hero-talent');
+            heroTalentFilters.appendChild(label);
         });
 
-        filterHTML += '</div>';
-        section.innerHTML = filterHTML;
-        filterContainer.appendChild(section);
+        // Generate Class Talent filters
+        filters.classTalents.forEach(value => {
+            const label = createCheckboxLabel(value, 'classTalents', 'class-talent');
+            classTalentFilters.appendChild(label);
+        });
+
+        // Generate Spec Talent filters
+        filters.specTalents.forEach(value => {
+            const label = createCheckboxLabel(value, 'specTalents', 'spec-talent');
+            specTalentFilters.appendChild(label);
+        });
+
+        // Add event listeners for checkboxes
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', applyFilters);
+        });
+    } else {
+        console.error('One or more filter containers not found in the DOM');
+    }
+}
+
+function updateSelectedFilters() {
+    const selectedHeroTalents = document.getElementById('selectedHeroTalents');
+    const selectedTalents = document.getElementById('selectedTalents');
+
+    selectedHeroTalents.innerHTML = '';
+    selectedTalents.innerHTML = '';
+
+    document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+        const filterType = checkbox.getAttribute('data-filter');
+        const value = checkbox.value;
+        const chip = document.createElement('div');
+        chip.className = 'filter-chip';
+        chip.innerHTML = `
+            ${value}
+            <i class="material-icons" onclick="removeFilter('${filterType}', '${value}')">close</i>
+        `;
+
+        if (filterType === 'heroTalent') {
+            selectedHeroTalents.appendChild(chip);
+        } else {
+            selectedTalents.appendChild(chip);
+        }
+    });
+
+    applyFilters();
+}
+
+function removeFilter(filterType, value) {
+    const checkbox = document.querySelector(`input[type="checkbox"][data-filter="${filterType}"][value="${value}"]`);
+    if (checkbox) {
+        checkbox.checked = false;
+        updateSelectedFilters();
     }
 }
 
 function applyFilters() {
-    const activeFilters = {
+    const selectedFilters = {
         heroTalent: new Set(),
         classTalents: new Set(),
         specTalents: new Set()
@@ -150,15 +191,13 @@ function applyFilters() {
 
     document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
         const filterType = checkbox.getAttribute('data-filter');
-        if (activeFilters[filterType]) {
-            activeFilters[filterType].add(checkbox.value);
-        }
+        selectedFilters[filterType].add(checkbox.value);
     });
 
     const filteredData = rawData.filter(row =>
-        (activeFilters.heroTalent.size === 0 || activeFilters.heroTalent.has(row.hero_talent)) &&
-        (activeFilters.classTalents.size === 0 || row.class_talents.every(talent => activeFilters.classTalents.has(talent))) &&
-        (activeFilters.specTalents.size === 0 || row.spec_talents.every(talent => activeFilters.specTalents.has(talent)))
+        (selectedFilters.heroTalent.size === 0 || selectedFilters.heroTalent.has(row.hero_talent)) &&
+        (selectedFilters.classTalents.size === 0 || Array.from(selectedFilters.classTalents).every(talent => row.class_talents.includes(talent))) &&
+        (selectedFilters.specTalents.size === 0 || Array.from(selectedFilters.specTalents).every(talent => row.spec_talents.includes(talent)))
     );
 
     const sortedData = sortData(filteredData);
@@ -348,26 +387,11 @@ function sortTable(n) {
     const icon = th.querySelector('.sort-icon');
 
     const isAscending = icon.textContent === 'arrow_upward';
-    const newDirection = isAscending ? 'desc' : 'asc';
+    currentSortDirection = isAscending ? 'desc' : 'asc';
+    currentSortColumn = n;
 
-    rows.sort((a, b) => {
-        let aValue, bValue;
-        if (n === 0) {
-            aValue = a.cells[n].textContent;
-            bValue = b.cells[n].textContent;
-        } else {
-            aValue = parseFloat(a.cells[n].getAttribute('data-value'));
-            bValue = parseFloat(b.cells[n].getAttribute('data-value'));
-        }
-
-        if (aValue < bValue) return newDirection === 'asc' ? -1 : 1;
-        if (aValue > bValue) return newDirection === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    rows.forEach(row => tbody.appendChild(row));
-
-    updateSortIndicator(n, newDirection);
+    applyFilters();
+    updateSortIndicator(n, currentSortDirection);
 }
 
 function sortData(data) {
@@ -390,6 +414,7 @@ function sortData(data) {
         return 0;
     });
 }
+
 function updateSortIndicator(columnIndex, direction) {
     const headers = document.querySelectorAll('.mdc-data-table__header-cell');
     headers.forEach((header, index) => {
@@ -409,7 +434,6 @@ function updateSortIndicator(columnIndex, direction) {
 // Initialize
 
 function initializeData(rawData) {
-    console.log("Initializing data with:", rawData);
     if (!Array.isArray(rawData) || rawData.length === 0) {
         console.error("rawData is empty or not an array");
         return;
@@ -435,12 +459,18 @@ function initializeData(rawData) {
     updateSortIndicator(reportTypes.indexOf('1T 300s') + 2, 'desc');
 }
 
-window.onload = function() {
+function initializeFilters() {
     generateFilterHTML();
-    initializeData(rawData);
-
-    // Add change event listeners to checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', applyFilters);
+        checkbox.addEventListener('change', updateSelectedFilters);
     });
+}
+
+window.onload = function() {
+    if (typeof rawData !== 'undefined' && Array.isArray(rawData)) {
+        generateFilterHTML();
+        initializeData(rawData);
+    } else {
+        console.error('rawData is not defined or is not an array');
+    }
 };

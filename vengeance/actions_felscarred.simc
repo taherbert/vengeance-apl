@@ -38,6 +38,8 @@ actions.fs+=/sigil_of_flame,if=!variable.hold_sof
 actions.fs+=/fiery_brand,if=!talent.fiery_demise|talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta))
 
 actions.fs+=/use_items,use_off_gcd=1,if=!buff.metamorphosis.up
+
+actions.fs+=/call_action_list,name=fs_execute,if=fight_remains<20
 actions.fs+=/call_action_list,name=fel_dev,if=buff.metamorphosis.up&!buff.demonsurge_hardcast.up&(buff.demonsurge_soul_sunder.up|buff.demonsurge_spirit_burst.up)
 actions.fs+=/call_action_list,name=metamorphosis,if=buff.metamorphosis.up&buff.demonsurge_hardcast.up
 
@@ -83,6 +85,14 @@ actions.metamorphosis+=/spirit_burst,if=talent.spirit_bomb&variable.can_spburst
 actions.metamorphosis+=/soul_sunder,if=!variable.dont_soul_cleave
 actions.metamorphosis+=/felblade
 actions.metamorphosis+=/fracture
+
+actions.fs_execute=metamorphosis,use_off_gcd=1
+actions.fs_execute+=/the_hunt
+actions.fs_execute+=/sigil_of_flame
+actions.fs_execute+=/fiery_brand
+actions.fs_execute+=/sigil_of_spite
+actions.fs_execute+=/soul_carver
+actions.fs_execute+=/fel_devastation
 
 actions.fs+=/the_hunt
 actions.fs+=/soul_carver,if=(!talent.fiery_demise|$(fd_active))&(soul_fragments.total<=2|variable.can_spbomb_one_gcd|variable.can_spburst_one_gcd)&!prev_gcd.1.sigil_of_spite

@@ -1,13 +1,8 @@
 # SimC configuration
-threads=12
-profileset_work_threads=2
-target_error=0.2
-iterations=5000
+target_error=0.05
 report_details=1
 single_actor_batch=1
 optimize_expressions=1
-# debug=1
-# output=log.txt
 
 # Character configuration
 demonhunter="Base"
@@ -23,7 +18,6 @@ talents=
 # talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAYMzMjhZkZmxY2MzsNzgx2MmxMmhxMmZmtZmhZwAAAAAsYWMjhZRTDMzMDbb
 # Aldrachi
 # talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGzmZmlxgx2MmxMmhZmxMzsNzMMDGAAAAmtZghxyGTygZmBLL
-
 
 # Buff configuration
 optimal_raid=1

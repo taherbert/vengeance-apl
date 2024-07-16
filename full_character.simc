@@ -49,19 +49,20 @@ actions.ar+=/variable,name=can_spb,value=soul_fragments>=variable.spb_threshold
 actions.ar+=/variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb_threshold
 actions.ar+=/variable,name=can_spb_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spb_threshold
 actions.ar+=/variable,name=dont_soul_cleave,value=soul_fragments>=2&(variable.can_spb|variable.can_spb_soon|variable.can_spb_one_gcd)&!prev_gcd.1.sigil_of_spite&!prev_gcd.1.soul_carver
-actions.ar+=/variable,name=rg_enhance_cleave,op=setif,condition=variable.big_aoe,value=1,value_else=0
-actions.ar+=/variable,name=cooldown_sync,value=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+actions.ar+=/variable,name=rg_enhance_cleave,op=setif,condition=variable.big_aoe|fight_remains<10,value=1,value_else=0
+actions.ar+=/variable,name=cooldown_sync,value=(debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up)|fight_remains<20
 actions.ar+=/potion,use_off_gcd=1,if=variable.cooldown_sync
 actions.ar+=/use_items,use_off_gcd=1,if=variable.cooldown_sync
 actions.ar+=/call_action_list,name=externals,if=variable.cooldown_sync
 actions.ar+=/immolation_aura
 actions.ar+=/sigil_of_flame,if=talent.ascending_flame|(!talent.ascending_flame&!prev_gcd.1.sigil_of_flame&(dot.sigil_of_flame.remains<(1+talent.quickened_sigils)))
 actions.ar+=/call_action_list,name=rg_active,if=buff.glaive_flurry.up|buff.rending_strike.up
+actions.ar+=/call_action_list,name=ar_execute,if=fight_remains<20
 actions.ar+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
 actions.ar+=/soul_cleave,if=(debuff.reavers_mark.remains<=(gcd.remains+execute_time+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
 actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=(gcd.remains+execute_time+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
 actions.ar+=/bulk_extraction,if=(debuff.reavers_mark.remains<=(gcd.remains+execute_time+(gcd.max*2)))&(buff.art_of_the_glaive.stack+(spell_targets.bulk_extraction>?5)>=30)
-actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=(gcd.remains+execute_time+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<(gcd.remains+execute_time+(gcd.max*2))
+actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments>=30)|(debuff.reavers_mark.remains<=(gcd.remains+execute_time+(gcd.max*4)))|cooldown.the_hunt.remains<(gcd.remains+execute_time+(gcd.max*4))|variable.rg_enhance_cleave
 actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
 actions.ar+=/fiery_brand,if=!talent.fiery_demise|(talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0)))
 actions.ar+=/fel_devastation,if=!variable.single_target&!variable.can_spb
@@ -69,9 +70,9 @@ actions.ar+=/bulk_extraction,if=spell_targets>=3
 actions.ar+=/sigil_of_spite,if=variable.can_spb|soul_fragments.total<=2
 actions.ar+=/felblade,if=!variable.can_spb&variable.can_spb_soon
 actions.ar+=/spirit_bomb,if=variable.can_spb
-actions.ar+=/soul_carver,if=!prev_gcd.2.sigil_of_spite
+actions.ar+=/soul_carver,if=!prev_gcd.2.sigil_of_spite&soul_fragments<=2
 actions.ar+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
-actions.ar+=/fel_devastation,if=buff.thrill_of_the_fight_damage.up|(!variable.can_spb&variable.can_spb_soon)
+actions.ar+=/fel_devastation,if=buff.thrill_of_the_fight_damage.up&(!variable.can_spb&variable.can_spb_soon)
 actions.ar+=/felblade,if=(fury<40&(variable.can_spb|variable.can_spb_soon))|fury<30
 actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave&(fury>=60|fury.deficit<=30)
 actions.ar+=/fracture
@@ -79,6 +80,16 @@ actions.ar+=/shear
 actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave
 actions.ar+=/felblade
 actions.ar+=/throw_glaive
+
+actions.ar_execute=metamorphosis,use_off_gcd=1
+actions.ar_execute+=/reavers_glaive
+actions.ar_execute+=/the_hunt,if=!buff.reavers_glaive.up
+actions.ar_execute+=/bulk_extraction,if=spell_targets>=3&buff.art_of_the_glaive.stack>=20
+actions.ar_execute+=/sigil_of_flame
+actions.ar_execute+=/fiery_brand
+actions.ar_execute+=/sigil_of_spite
+actions.ar_execute+=/soul_carver
+actions.ar_execute+=/fel_devastation
 
 actions.externals=invoke_external_buff,name=symbol_of_hope
 actions.externals+=/invoke_external_buff,name=power_infusion
@@ -111,6 +122,7 @@ actions.fs+=/immolation_aura,if=!(prev_gcd.1.sigil_of_flame&cooldown.metamorphos
 actions.fs+=/sigil_of_flame,if=!variable.hold_sof
 actions.fs+=/fiery_brand,if=!talent.fiery_demise|talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0&variable.fiery_brand_back_before_meta))
 actions.fs+=/use_items,use_off_gcd=1,if=!buff.metamorphosis.up
+actions.fs+=/call_action_list,name=fs_execute,if=fight_remains<20
 actions.fs+=/call_action_list,name=fel_dev,if=buff.metamorphosis.up&!buff.demonsurge_hardcast.up&(buff.demonsurge_soul_sunder.up|buff.demonsurge_spirit_burst.up)
 actions.fs+=/call_action_list,name=metamorphosis,if=buff.metamorphosis.up&buff.demonsurge_hardcast.up
 actions.fs+=/call_action_list,name=fel_dev_prep,if=!buff.demonsurge_hardcast.up&(cooldown.fel_devastation.up|(cooldown.fel_devastation.remains<=(gcd.max*2)))
@@ -128,6 +140,14 @@ actions.fs+=/soul_sunder,if=!variable.dont_soul_cleave
 actions.fs+=/soul_cleave,if=!variable.dont_soul_cleave
 actions.fs+=/fracture
 actions.fs+=/throw_glaive
+
+actions.fs_execute=metamorphosis,use_off_gcd=1
+actions.fs_execute+=/the_hunt
+actions.fs_execute+=/sigil_of_flame
+actions.fs_execute+=/fiery_brand
+actions.fs_execute+=/sigil_of_spite
+actions.fs_execute+=/soul_carver
+actions.fs_execute+=/fel_devastation
 
 actions.meta_prep=metamorphosis,use_off_gcd=1,if=cooldown.sigil_of_flame.charges<1
 actions.meta_prep+=/fiery_brand,if=talent.fiery_demise&active_dot.fiery_brand=0

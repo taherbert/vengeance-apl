@@ -3,7 +3,6 @@ $(st_spb_thresh_fd)=5
 $(small_aoe_spb_thresh_fd)=5
 $(big_aoe_spb_thresh_fd)=4
 
-# no spirit bomb in single target; 100 is to ensure threshold is never met
 $(st_spb_thresh)=5
 $(small_aoe_spb_thresh)=5
 $(big_aoe_spb_thresh)=4
@@ -15,20 +14,44 @@ actions.ar+=/variable,name=can_spb_soon,value=soul_fragments.total>=variable.spb
 actions.ar+=/variable,name=can_spb_one_gcd,value=(soul_fragments.total+variable.num_spawnable_souls)>=variable.spb_threshold
 # We only want to check active soul fragments. We can often soul cleave while soul fragments are spawning, skipping the consumption of them.
 actions.ar+=/variable,name=dont_soul_cleave,value=soul_fragments>=2&(variable.can_spb|variable.can_spb_soon|variable.can_spb_one_gcd)&!prev_gcd.1.sigil_of_spite&!prev_gcd.1.soul_carver
-
 # During Reaver's Glaive, enhance our soul cleave (1) or shear (0)
-actions.ar+=/variable,name=rg_enhance_cleave,op=setif,condition=variable.big_aoe,value=1,value_else=0
-
+actions.ar+=/variable,name=rg_enhance_cleave,op=setif,condition=variable.big_aoe|fight_remains<10,value=1,value_else=0
 # Externals, potions, trinkets when reaver's mark is up and we have thrill of the fight damage up
-actions.ar+=/variable,name=cooldown_sync,value=debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up
+actions.ar+=/variable,name=cooldown_sync,value=(debuff.reavers_mark.up&buff.thrill_of_the_fight_damage.up)|fight_remains<20
+
 actions.ar+=/potion,use_off_gcd=1,if=variable.cooldown_sync
 actions.ar+=/use_items,use_off_gcd=1,if=variable.cooldown_sync
 actions.ar+=/call_action_list,name=externals,if=variable.cooldown_sync
-
 actions.ar+=/immolation_aura
 actions.ar+=/sigil_of_flame,if=talent.ascending_flame|(!talent.ascending_flame&!prev_gcd.1.sigil_of_flame&(dot.sigil_of_flame.remains<(1+talent.quickened_sigils)))
-
 actions.ar+=/call_action_list,name=rg_active,if=buff.glaive_flurry.up|buff.rending_strike.up
+actions.ar+=/call_action_list,name=ar_execute,if=fight_remains<20
+actions.ar+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
+# use soul cleave or spirit bomb to collect soul fragments if we are at risk of having reavers mark fall off before we can recast it
+actions.ar+=/soul_cleave,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
+actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
+actions.ar+=/bulk_extraction,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+(spell_targets.bulk_extraction>?5)>=30)
+
+# We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active. If we are enhancing cleave, we just want to send this ASAP. If we are enhancing fracture, we want to delay until the end of previous reavers mark to ensure full reavers mark uptime.
+actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments>=30)|(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*4)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*4))|variable.rg_enhance_cleave
+actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
+actions.ar+=/fiery_brand,if=!talent.fiery_demise|(talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0)))
+actions.ar+=/fel_devastation,if=!variable.single_target&!variable.can_spb
+actions.ar+=/bulk_extraction,if=spell_targets>=3
+actions.ar+=/sigil_of_spite,if=variable.can_spb|soul_fragments.total<=2
+actions.ar+=/felblade,if=!variable.can_spb&variable.can_spb_soon
+actions.ar+=/spirit_bomb,if=variable.can_spb
+actions.ar+=/soul_carver,if=!prev_gcd.2.sigil_of_spite&soul_fragments<=2
+actions.ar+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
+actions.ar+=/fel_devastation,if=buff.thrill_of_the_fight_damage.up&(!variable.can_spb&variable.can_spb_soon)
+actions.ar+=/felblade,if=(fury<40&(variable.can_spb|variable.can_spb_soon))|fury<30
+actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave&(fury>=60|fury.deficit<=30)
+actions.ar+=/fracture
+actions.ar+=/shear
+actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave
+actions.ar+=/felblade
+actions.ar+=/throw_glaive
+
 
 # Meta can be used before the fracture if we won't waste souls (it will generate 4 souls)
 actions.rg_active+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&(buff.rending_strike.up&!buff.glaive_flurry.up)&soul_fragments<=1
@@ -40,28 +63,13 @@ actions.rg_active+=/fracture,if=variable.rg_enhance_cleave&buff.rending_strike.u
 actions.rg_active+=/shear,if=variable.rg_enhance_cleave&buff.rending_strike.up&buff.glaive_flurry.up|!variable.rg_enhance_cleave&!buff.glaive_flurry.up
 actions.rg_active+=/soul_cleave,if=!variable.rg_enhance_cleave&buff.glaive_flurry.up&buff.rending_strike.up|variable.rg_enhance_cleave&!buff.rending_strike.up
 
-actions.ar+=/metamorphosis,use_off_gcd=1,if=!buff.metamorphosis.up&!(cooldown.the_hunt.up|buff.reavers_glaive.up)
-# use soul cleave or spirit bomb to collect soul fragments if we are at risk of having reavers mark fall off before we can recast it
-actions.ar+=/soul_cleave,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30&buff.art_of_the_glaive.stack>=28)
-actions.ar+=/spirit_bomb,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+soul_fragments>=30)
-actions.ar+=/bulk_extraction,if=(debuff.reavers_mark.remains<=($(this_action)+(gcd.max*2)))&(buff.art_of_the_glaive.stack+(spell_targets.bulk_extraction>?5)>=30)
 
-# We want to time reaver's glaive such that our empowered abilities are cast while the previous reaver's glaive is still active
-actions.ar+=/reavers_glaive,if=(buff.art_of_the_glaive.stack+soul_fragments.total>=30)|(debuff.reavers_mark.remains<=($(this_action)+action.soul_cleave.execute_time+(talent.fracture&action.fracture.execute_time|!talent.fracture&action.shear.execute_time)+(gcd.max*2)))|cooldown.the_hunt.remains<($(this_action)+(gcd.max*2))
-actions.ar+=/the_hunt,if=!buff.reavers_glaive.up
-actions.ar+=/fiery_brand,if=!talent.fiery_demise|(talent.fiery_demise&((talent.down_in_flames&charges>=max_charges)|(active_dot.fiery_brand=0)))
-actions.ar+=/fel_devastation,if=!variable.single_target&!variable.can_spb
-actions.ar+=/bulk_extraction,if=spell_targets>=3
-actions.ar+=/sigil_of_spite,if=variable.can_spb|soul_fragments.total<=2
-actions.ar+=/felblade,if=!variable.can_spb&variable.can_spb_soon
-actions.ar+=/spirit_bomb,if=variable.can_spb
-actions.ar+=/soul_carver,if=!prev_gcd.2.sigil_of_spite
-actions.ar+=/fracture,if=spell_targets.spirit_bomb>1&(soul_fragments>=2&soul_fragments<=3)&fury.deficit>=25
-actions.ar+=/fel_devastation,if=buff.thrill_of_the_fight_damage.up|(!variable.can_spb&variable.can_spb_soon)
-actions.ar+=/felblade,if=(fury<40&(variable.can_spb|variable.can_spb_soon))|fury<30
-actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave&(fury>=60|fury.deficit<=30)
-actions.ar+=/fracture
-actions.ar+=/shear
-actions.ar+=/soul_cleave,if=!variable.dont_soul_cleave
-actions.ar+=/felblade
-actions.ar+=/throw_glaive
+actions.ar_execute=metamorphosis,use_off_gcd=1
+actions.ar_execute+=/reavers_glaive
+actions.ar_execute+=/the_hunt,if=!buff.reavers_glaive.up
+actions.ar_execute+=/bulk_extraction,if=spell_targets>=3&buff.art_of_the_glaive.stack>=20
+actions.ar_execute+=/sigil_of_flame
+actions.ar_execute+=/fiery_brand
+actions.ar_execute+=/sigil_of_spite
+actions.ar_execute+=/soul_carver
+actions.ar_execute+=/fel_devastation

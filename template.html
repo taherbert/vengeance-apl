@@ -13,7 +13,20 @@
 <body>
     <div class="container">
         <h1 class="mdc-typography--headline3">Vengeance Demon Hunter SimulationCraft Report Summary</h1>
-        <div id="filters"></div>
+        <div id="filters">
+            <div class="filter-section">
+                <h3><i class="material-icons">person</i> Hero Talents</h3>
+                <div class="filter-options hero-talents" id="heroTalentFilters"></div>
+            </div>
+            <div class="filter-section">
+                <h3><i class="material-icons">stars</i> Class Talents</h3>
+                <div class="filter-options class-talents" id="classTalentFilters"></div>
+            </div>
+            <div class="filter-section">
+                <h3><i class="material-icons">auto_awesome</i> Spec Talents</h3>
+                <div class="filter-options spec-talents" id="specTalentFilters"></div>
+            </div>
+        </div>
         <table id="dataTable" class="mdc-data-table__table">
             <thead>
                 <tr class="mdc-data-table__header-row">
