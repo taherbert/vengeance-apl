@@ -4,19 +4,26 @@ import json
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
+
 def extract_chart_data(file_path: str) -> Dict[str, float]:
     with open(file_path, 'r', encoding='utf-8') as file:
-        content = file.read()
+        data = json.load(file)
 
-    match = re.search(r'{"series":\[{"name":"Damage per Second","data":\[(.*?)\]}', content, re.DOTALL)
-    if not match:
-        return {}
+    chart_data = {}
+    profilesets = data.get('sim', {}).get('profilesets', {}).get('results', [])
 
-    data_string = match.group(1)
-    data_pattern = r'{"name":"(.*?)","reldiff":.*?,"y":([\d.]+)}'
-    data_matches = re.findall(data_pattern, data_string)
+    if not profilesets:
+        print(f"Warning: No profilesets found in {file_path}")
 
-    return {name: float(y) for name, y in data_matches}
+    for profile in profilesets:
+        name = profile.get('name', '')
+        dps = profile.get('mean', 0)  # Changed this line to get 'mean' directly
+
+        if dps == 0:
+            print(f"Warning: No DPS data found for profile {name} in {file_path}")
+
+        chart_data[name] = dps
+    return chart_data
 
 def extract_filename_info(filename: str) -> str:
     match = re.search(r'(\d+)T_(\d+)s', filename)
@@ -27,10 +34,15 @@ def parse_build_name(build_name: str) -> Dict[str, str]:
     class_match = re.search(r'\((.*?)\)', build_name)
     spec_match = build_name.split('-')[-1] if '-' in build_name else ''
 
+    spec_talents = spec_match.split('__') if '__' in spec_match else [spec_match, '']
+    offensive_talents = spec_talents[0].split('_') if spec_talents[0] else []
+    defensive_talents = spec_talents[1].split('_') if len(spec_talents) > 1 else []
+
     return {
         'hero_talent': hero_match.group(1) if hero_match else "",
         'class_talents': class_match.group(1).replace('_', ', ').split(', ') if class_match else [],
-        'spec_talents': spec_match.split('_') if spec_match else [],
+        'offensive_talents': offensive_talents,
+        'defensive_talents': defensive_talents,
         'full_name': build_name
     }
 
@@ -38,9 +50,18 @@ def collect_data() -> Tuple[Dict[str, Dict[str, Dict]], List[str]]:
     data = defaultdict(lambda: defaultdict(dict))
     report_types = set()
 
-    for filename in os.listdir('.'):
-        if filename.endswith('.html') and 'all' in filename.lower():
-            file_path = os.path.join('.', filename)
+    # Get the path to the 'reports' folder
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    reports_dir = os.path.join(script_dir, 'reports')
+
+    # Check if the reports directory exists
+    if not os.path.exists(reports_dir):
+        print(f"Error: Reports directory not found at {reports_dir}")
+        return dict(data), []
+
+    for filename in os.listdir(reports_dir):
+        if filename.endswith('.json') and 'all' in filename.lower():
+            file_path = os.path.join(reports_dir, filename)
             report_type = extract_filename_info(filename)
             if report_type:
                 report_types.add(report_type)
@@ -62,17 +83,46 @@ def format_build_name(build: str) -> str:
     parts = build.split('-')
     hero_talent = re.search(r'\[(.*?)\]', parts[0]).group(1)
     class_talents = re.search(r'\((.*?)\)', parts[0]).group(1).replace('_', '/')
-    spec_talents = parts[1].replace('_', '/')
-    return f"{hero_talent} | {class_talents} | {spec_talents}"
+    spec_talents = parts[1].split('__')
+    offensive_talents = spec_talents[0].replace('_', '/')
+    defensive_talents = spec_talents[1].replace('_', '/') if len(spec_talents) > 1 else ''
+    return f"{hero_talent} | {class_talents} | {offensive_talents} | {defensive_talents}"
 
 def generate_html(data: Dict[str, Dict[str, Dict]], report_types: List[str]) -> str:
     overall_ranks = calculate_overall_rank(data, report_types)
+
+    # Count the frequency of each talent
+    talent_counts = {
+        'hero_talent': defaultdict(int),
+        'class_talents': defaultdict(int),
+        'offensive_talents': defaultdict(int),
+        'defensive_talents': defaultdict(int)
+    }
+    total_profiles = len(data)
+
+    for build_data in data.values():
+        talent_counts['hero_talent'][build_data['hero_talent']] += 1
+        for talent in build_data['class_talents']:
+            talent_counts['class_talents'][talent] += 1
+        for talent in build_data['offensive_talents']:
+            talent_counts['offensive_talents'][talent] += 1
+        for talent in build_data['defensive_talents']:
+            talent_counts['defensive_talents'][talent] += 1
+
+    # Filter out talents that appear in every profile
+    filtered_talents = {
+        'heroTalent': [talent for talent, count in talent_counts['hero_talent'].items() if count < total_profiles],
+        'classTalents': [talent for talent, count in talent_counts['class_talents'].items() if count < total_profiles],
+        'offensiveTalents': [talent for talent, count in talent_counts['offensive_talents'].items() if count < total_profiles],
+        'defensiveTalents': [talent for talent, count in talent_counts['defensive_talents'].items() if count < total_profiles]
+    }
 
     json_data = [{
         'build': format_build_name(build),
         'hero_talent': build_data['hero_talent'],
         'class_talents': build_data['class_talents'],
-        'spec_talents': build_data['spec_talents'],
+        'offensive_talents': build_data['offensive_talents'],
+        'defensive_talents': build_data['defensive_talents'],
         'overall_rank': overall_ranks[build],
         'metrics': {rt: round(build_data.get(rt, 0), 2) for rt in report_types}
     } for build, build_data in data.items()]
@@ -96,6 +146,7 @@ def generate_html(data: Dict[str, Dict[str, Dict]], report_types: List[str]) -> 
         js_content = f.read()
 
     json_data_str = json.dumps(json_data)
+    filtered_talents_str = json.dumps(filtered_talents)
     if not json_data_str or json_data_str == '[]':
         print("Warning: json_data is empty or invalid")
 
@@ -103,6 +154,7 @@ def generate_html(data: Dict[str, Dict[str, Dict]], report_types: List[str]) -> 
     // Data injected by Python script
     const rawData = {json_data_str};
     const reportTypes = {json.dumps(report_types)};
+    const filteredTalents = {filtered_talents_str};
 
     {js_content}
     """
@@ -115,6 +167,9 @@ def generate_html(data: Dict[str, Dict[str, Dict]], report_types: List[str]) -> 
 
 def main():
     data, report_types = collect_data()
+    if not data or not report_types:
+        print("Error: No data or report types found. Make sure the 'reports' folder exists and contains valid JSON files.")
+        return
     html = generate_html(data, report_types)
 
     with open('index.html', 'w', encoding='utf-8') as f:

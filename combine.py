@@ -9,7 +9,7 @@ def load_config(config_path):
     return config
 
 def combine_and_compile_files(config):
-    main_file = os.path.join(config['General']['folder'], 'character.simc')
+    main_file = os.path.join(config['General']['apl_folder'], 'character.simc')
     output_file = config['General'].get('output_file', 'full_character.simc')
     simc_path = config['General']['simc']
     base_dir = os.path.dirname(main_file)

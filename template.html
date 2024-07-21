@@ -7,43 +7,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-    $STYLES
+        $STYLES
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="mdc-typography--headline3">Vengeance Demon Hunter SimulationCraft Report Summary</h1>
-        <div id="filters">
+        <button id="toggleFilters" class="mdc-button mdc-button--raised">
+            <span class="mdc-button__label">Toggle Filters</span>
+        </button>
+        <div id="filters" style="display: none">
             <div class="filter-section">
-                <h3><i class="material-icons">person</i> Hero Talents</h3>
-                <div class="filter-options hero-talents" id="heroTalentFilters"></div>
+                <h3>Hero Talents</h3>
+                <div id="heroTalentFilters" class="filter-container"></div>
             </div>
             <div class="filter-section">
-                <h3><i class="material-icons">stars</i> Class Talents</h3>
-                <div class="filter-options class-talents" id="classTalentFilters"></div>
+                <h3>Class Talents</h3>
+                <div id="classTalentFilters" class="filter-container"></div>
             </div>
             <div class="filter-section">
-                <h3><i class="material-icons">auto_awesome</i> Spec Talents</h3>
-                <div class="filter-options spec-talents" id="specTalentFilters"></div>
+                <h3>Offensive Spec Talents</h3>
+                <div id="offensiveTalentFilters" class="filter-container"></div>
+            </div>
+            <div class="filter-section">
+                <h3>Defensive Spec Talents</h3>
+                <div id="defensiveTalentFilters" class="filter-container"></div>
             </div>
         </div>
-        <table id="dataTable" class="mdc-data-table__table">
-            <thead>
-                <tr class="mdc-data-table__header-row">
-                    <th class="mdc-data-table__header-cell build-name" role="columnheader" scope="col">Build</th>
-                    <th class="mdc-data-table__header-cell rank" role="columnheader" scope="col" onclick="sortTable(1)">
-                        Rank <i class="material-icons sort-icon">arrow_downward</i>
-                    </th>
-                    $TABLE_HEADERS
-                </tr>
-            </thead>
-            <tbody class="mdc-data-table__content">
-                <!-- Table rows will be populated by the script -->
-            </tbody>
-        </table>
+
+        <div class="mdc-data-table">
+            <table id="dataTable" class="mdc-data-table__table">
+                <thead>
+                    <tr class="mdc-data-table__header-row">
+                        <th class="mdc-data-table__header-cell build-name" role="columnheader" scope="col">Build</th>
+                        <th class="mdc-data-table__header-cell rank" role="columnheader" scope="col" onclick="sortTable(1)">
+                            Rank <i class="material-icons sort-icon">arrow_downward</i>
+                        </th>
+                        $TABLE_HEADERS
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Table body will be dynamically populated -->
+                </tbody>
+            </table>
+        </div>
     </div>
     <script>
-    $SCRIPT
+        $SCRIPT
     </script>
 </body>
 </html>

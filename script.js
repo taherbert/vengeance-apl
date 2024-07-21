@@ -1,16 +1,23 @@
-// const rawData = $JSON_DATA;
-// const reportTypes = $REPORT_TYPES;
-
+// Global variables
 let globalTopValues = {};
 let globalPercentages = {};
-let currentSortColumn = 1; // Default to sorting by rank (assuming rank is the second column)
-let currentSortDirection = 'asc'; // Default to ascending order
+let currentSortColumn = 1;
+let currentSortDirection = 'asc';
 let bestAldrachi = {};
 let bestFelscarred = {};
 const bestBuilds = {};
+let filteredData = [];
+
+// Constants for virtual scrolling
+const ROW_HEIGHT = 100;
+const BUFFER_SIZE = 15;
+
+// Virtual scrolling variables
+let visibleRowsCount;
+let firstVisibleRowIndex;
+let lastVisibleRowIndex;
 
 function findBestBuilds(data, metric) {
-
     const aldrachiBuilds = data.filter(row => row.hero_talent.toLowerCase().includes('aldrachi'));
     const felscarredBuilds = data.filter(row =>
         row.hero_talent.toLowerCase().includes('felscarred') ||
@@ -18,17 +25,11 @@ function findBestBuilds(data, metric) {
         row.hero_talent.toLowerCase().includes('flamebound')
     );
 
-    bestAldrachi = aldrachiBuilds.length > 0
-        ? aldrachiBuilds.reduce((best, current) =>
-            (current.metrics[metric] > best.metrics[metric]) ? current : best
-        )
-        : null;
+    bestAldrachi = aldrachiBuilds.reduce((best, current) =>
+        (current.metrics[metric] > best.metrics[metric]) ? current : best, aldrachiBuilds[0] || null);
 
-    bestFelscarred = felscarredBuilds.length > 0
-        ? felscarredBuilds.reduce((best, current) =>
-            (current.metrics[metric] > best.metrics[metric]) ? current : best
-        )
-        : null;
+    bestFelscarred = felscarredBuilds.reduce((best, current) =>
+        (current.metrics[metric] > best.metrics[metric]) ? current : best, felscarredBuilds[0] || null);
 
     return { bestAldrachi, bestFelscarred };
 }
@@ -47,18 +48,9 @@ function createComparisonViz(metric) {
         return '<div class="comparison-viz"><span>No data</span></div>';
     }
 
-    let topBuild, bottomBuild, topValue, bottomValue;
-    if (aldrachiValue > felscarredValue) {
-        topBuild = 'Aldrachi';
-        bottomBuild = 'Felscarred';
-        topValue = aldrachiValue;
-        bottomValue = felscarredValue;
-    } else {
-        topBuild = 'Felscarred';
-        bottomBuild = 'Aldrachi';
-        topValue = felscarredValue;
-        bottomValue = aldrachiValue;
-    }
+    const [topBuild, bottomBuild, topValue, bottomValue] = aldrachiValue > felscarredValue
+        ? ['Aldrachi', 'Felscarred', aldrachiValue, felscarredValue]
+        : ['Felscarred', 'Aldrachi', felscarredValue, aldrachiValue];
 
     const percentageDiff = ((topValue - bottomValue) / bottomValue * 100).toFixed(1);
 
@@ -71,14 +63,6 @@ function createComparisonViz(metric) {
     `;
 }
 
-function updateComparisonViz(metric) {
-    const vizContainer = document.querySelector(`th[data-metric="${metric}"] .comparison-viz`);
-    if (vizContainer) {
-        vizContainer.outerHTML = createComparisonViz(metric);
-    }
-}
-
-// Add this function to calculate global top values and percentages
 function calculateGlobalValues(data) {
     reportTypes.forEach(type => {
         const values = data.filter(r => r && r.metrics && r.metrics[type]).map(r => r.metrics[type]);
@@ -103,90 +87,58 @@ function createCheckboxLabel(value, filterType, className) {
     label.className = `mdc-checkbox ${className}`;
     label.innerHTML = `
         <input type="checkbox" class="mdc-checkbox__native-control" data-filter="${filterType}" value="${value}"/>
+        <div class="mdc-checkbox__background">
+            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+            </svg>
+        </div>
         <span class="mdc-checkbox__label">${value}</span>
     `;
     return label;
 }
 
 function generateFilterHTML() {
-    const filters = {
-        heroTalent: new Set(rawData.map(d => d.hero_talent)),
-        classTalents: new Set(rawData.flatMap(d => d.class_talents)),
-        specTalents: new Set(rawData.flatMap(d => d.spec_talents))
+    const filterContainers = {
+        heroTalent: document.getElementById('heroTalentFilters'),
+        classTalents: document.getElementById('classTalentFilters'),
+        offensiveTalents: document.getElementById('offensiveTalentFilters'),
+        defensiveTalents: document.getElementById('defensiveTalentFilters')
     };
 
-    const heroTalentFilters = document.getElementById('heroTalentFilters');
-    const classTalentFilters = document.getElementById('classTalentFilters');
-    const specTalentFilters = document.getElementById('specTalentFilters');
+    for (const [filterType, container] of Object.entries(filterContainers)) {
+        if (!container) {
+            console.error(`Filter container for ${filterType} not found in the DOM`);
+            continue;
+        }
 
-    if (heroTalentFilters && classTalentFilters && specTalentFilters) {
-        // Generate Hero Talent filters
-        filters.heroTalent.forEach(value => {
-            const label = createCheckboxLabel(value, 'heroTalent', 'hero-talent');
-            heroTalentFilters.appendChild(label);
-        });
-
-        // Generate Class Talent filters
-        filters.classTalents.forEach(value => {
-            const label = createCheckboxLabel(value, 'classTalents', 'class-talent');
-            classTalentFilters.appendChild(label);
-        });
-
-        // Generate Spec Talent filters
-        filters.specTalents.forEach(value => {
-            const label = createCheckboxLabel(value, 'specTalents', 'spec-talent');
-            specTalentFilters.appendChild(label);
-        });
-
-        // Add event listeners for checkboxes
-        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', applyFilters);
-        });
-    } else {
-        console.error('One or more filter containers not found in the DOM');
+        if (Array.isArray(filteredTalents[filterType])) {
+            filteredTalents[filterType].forEach(value => {
+                if (value) {
+                    const label = createCheckboxLabel(value, filterType, `${filterType.toLowerCase()}-talent`);
+                    container.appendChild(label);
+                }
+            });
+        } else {
+            console.error(`filteredTalents[${filterType}] is not an array`);
+        }
     }
+
+    // Add event listeners for checkboxes
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedFilters);
+    });
 }
 
 function updateSelectedFilters() {
-    const selectedHeroTalents = document.getElementById('selectedHeroTalents');
-    const selectedTalents = document.getElementById('selectedTalents');
-
-    selectedHeroTalents.innerHTML = '';
-    selectedTalents.innerHTML = '';
-
-    document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-        const filterType = checkbox.getAttribute('data-filter');
-        const value = checkbox.value;
-        const chip = document.createElement('div');
-        chip.className = 'filter-chip';
-        chip.innerHTML = `
-            ${value}
-            <i class="material-icons" onclick="removeFilter('${filterType}', '${value}')">close</i>
-        `;
-
-        if (filterType === 'heroTalent') {
-            selectedHeroTalents.appendChild(chip);
-        } else {
-            selectedTalents.appendChild(chip);
-        }
-    });
-
     applyFilters();
-}
-
-function removeFilter(filterType, value) {
-    const checkbox = document.querySelector(`input[type="checkbox"][data-filter="${filterType}"][value="${value}"]`);
-    if (checkbox) {
-        checkbox.checked = false;
-        updateSelectedFilters();
-    }
 }
 
 function applyFilters() {
     const selectedFilters = {
         heroTalent: new Set(),
         classTalents: new Set(),
-        specTalents: new Set()
+        offensiveTalents: new Set(),
+        defensiveTalents: new Set()
     };
 
     document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
@@ -194,17 +146,18 @@ function applyFilters() {
         selectedFilters[filterType].add(checkbox.value);
     });
 
-    const filteredData = rawData.filter(row =>
+    filteredData = rawData.filter(row =>
         (selectedFilters.heroTalent.size === 0 || selectedFilters.heroTalent.has(row.hero_talent)) &&
         (selectedFilters.classTalents.size === 0 || Array.from(selectedFilters.classTalents).every(talent => row.class_talents.includes(talent))) &&
-        (selectedFilters.specTalents.size === 0 || Array.from(selectedFilters.specTalents).every(talent => row.spec_talents.includes(talent)))
+        (selectedFilters.offensiveTalents.size === 0 || Array.from(selectedFilters.offensiveTalents).every(talent => row.offensive_talents.includes(talent))) &&
+        (selectedFilters.defensiveTalents.size === 0 || Array.from(selectedFilters.defensiveTalents).every(talent => row.defensive_talents.includes(talent)))
     );
 
-    const sortedData = sortData(filteredData);
-    updateTable(sortedData);
+    sortData();
+    updateTable();
 }
 
-function updateTable(data) {
+function updateTable() {
     const table = document.getElementById("dataTable");
     const thead = table.querySelector('thead');
     const tbody = table.querySelector('tbody');
@@ -243,71 +196,104 @@ function updateTable(data) {
 
     thead.appendChild(headerRow);
 
-    // Create table body
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.className = 'mdc-data-table__row';
+    // Create a container for virtual scrolling
+    const virtualScrollContainer = document.createElement('div');
+    virtualScrollContainer.id = 'virtualScrollContainer';
+    virtualScrollContainer.style.height = `${filteredData.length * ROW_HEIGHT}px`;
+    tbody.appendChild(virtualScrollContainer);
 
-        // Build name column
-        const buildNameCell = document.createElement('td');
-        buildNameCell.className = 'mdc-data-table__cell build-name';
-        buildNameCell.innerHTML = formatBuildName(row);
-        tr.appendChild(buildNameCell);
-
-        // Rank column
-        const rankCell = document.createElement('td');
-        rankCell.className = 'mdc-data-table__cell rank';
-        rankCell.setAttribute('data-value', row.overall_rank || '');
-        rankCell.textContent = row.overall_rank || 'N/A';
-        tr.appendChild(rankCell);
-
-        // Metric columns
-        reportTypes.forEach(type => {
-            const value = row.metrics && row.metrics[type] ? row.metrics[type] : 0;
-            const percentage = row.percentages[type];
-            const barColor = getBarColor(parseFloat(percentage));
-
-            const metricCell = document.createElement('td');
-            metricCell.className = 'mdc-data-table__cell';
-            metricCell.setAttribute('data-value', value);
-            metricCell.innerHTML = `
-                <div class="metric-container">
-                    <span class="metric-value">${formatNumber(value)}</span>
-                    <span class="metric-diff">(-${percentage}%)</span>
-                </div>
-                <div class="linear-progress">
-                    <div class="linear-progress-bar" style="width: ${100 - parseFloat(percentage)}%; background-color: ${barColor};"></div>
-                </div>
-            `;
-            tr.appendChild(metricCell);
-        });
-
-        tbody.appendChild(tr);
-    });
+    // Initialize virtual scroll
+    initializeVirtualScroll();
 
     // Update sort indicators
-    table.querySelectorAll('.sort-icon').forEach((icon, index) => {
-        if (index === currentSortColumn) {
-            icon.textContent = currentSortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward';
-        } else {
-            icon.textContent = 'arrow_downward';
-        }
-    });
+    updateSortIndicator(currentSortColumn, currentSortDirection);
 }
 
-function toggleExpand(row) {
-    const buildNameContainer = row.querySelector('.build-name-container');
-    const expandIcon = row.querySelector('.expand-button i');
+function renderVisibleRows() {
+    const tbody = document.getElementById("dataTable").querySelector('tbody');
+    const virtualScrollContainer = document.getElementById('virtualScrollContainer');
+    const scrollTop = tbody.scrollTop;
+    firstVisibleRowIndex = Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_SIZE;
+    lastVisibleRowIndex = firstVisibleRowIndex + visibleRowsCount + 2 * BUFFER_SIZE;
 
-    if (buildNameContainer.classList.contains('collapsed')) {
-        buildNameContainer.classList.remove('collapsed');
-        buildNameContainer.classList.add('expanded');
-        expandIcon.textContent = 'expand_more';
-    } else {
-        buildNameContainer.classList.remove('expanded');
-        buildNameContainer.classList.add('collapsed');
-        expandIcon.textContent = 'chevron_right';
+    firstVisibleRowIndex = Math.max(0, firstVisibleRowIndex);
+    lastVisibleRowIndex = Math.min(filteredData.length - 1, lastVisibleRowIndex);
+
+    // Remove rows that are no longer visible
+    const existingRows = virtualScrollContainer.querySelectorAll('.mdc-data-table__row');
+    existingRows.forEach(row => {
+        const rowIndex = parseInt(row.getAttribute('data-index'));
+        if (rowIndex < firstVisibleRowIndex || rowIndex > lastVisibleRowIndex) {
+            virtualScrollContainer.removeChild(row);
+        }
+    });
+
+    // Add new rows that have become visible
+    for (let i = firstVisibleRowIndex; i <= lastVisibleRowIndex; i++) {
+        if (!virtualScrollContainer.querySelector(`[data-index="${i}"]`)) {
+            const row = filteredData[i];
+            const tr = document.createElement('tr');
+            tr.className = 'mdc-data-table__row';
+            tr.setAttribute('data-index', i);
+            tr.style.position = 'absolute';
+            tr.style.top = `${i * ROW_HEIGHT}px`;
+            tr.style.height = `${ROW_HEIGHT}px`;
+
+            // Build name column
+            const buildNameCell = document.createElement('td');
+            buildNameCell.className = 'mdc-data-table__cell build-name';
+            buildNameCell.innerHTML = formatBuildName(row);
+            tr.appendChild(buildNameCell);
+
+            // Rank column
+            const rankCell = document.createElement('td');
+            rankCell.className = 'mdc-data-table__cell rank';
+            rankCell.setAttribute('data-value', row.overall_rank || '');
+            rankCell.textContent = row.overall_rank || 'N/A';
+            tr.appendChild(rankCell);
+
+            // Metric columns
+            reportTypes.forEach(type => {
+                const value = row.metrics && row.metrics[type] ? row.metrics[type] : 0;
+                const percentage = row.percentages[type];
+                const barColor = getBarColor(parseFloat(percentage));
+
+                const metricCell = document.createElement('td');
+                metricCell.className = 'mdc-data-table__cell';
+                metricCell.setAttribute('data-value', value);
+                metricCell.innerHTML = `
+                    <div class="metric-container">
+                        <span class="metric-value">${formatNumber(value)}</span>
+                        <span class="metric-diff">(-${percentage}%)</span>
+                    </div>
+                    <div class="linear-progress">
+                        <div class="linear-progress-bar" style="width: ${100 - parseFloat(percentage)}%; background-color: ${barColor};"></div>
+                    </div>
+                `;
+                tr.appendChild(metricCell);
+            });
+
+            virtualScrollContainer.appendChild(tr);
+        }
     }
+}
+
+function initializeVirtualScroll() {
+    const tbody = document.getElementById("dataTable").querySelector('tbody');
+    const tableHeight = tbody.clientHeight;
+    visibleRowsCount = Math.ceil(tableHeight / ROW_HEIGHT);
+
+    tbody.addEventListener('scroll', () => {
+        requestAnimationFrame(renderVisibleRows);
+    });
+
+    window.addEventListener('resize', () => {
+        const newTableHeight = tbody.clientHeight;
+        visibleRowsCount = Math.ceil(newTableHeight / ROW_HEIGHT);
+        renderVisibleRows();
+    });
+
+    renderVisibleRows();
 }
 
 function formatBuildName(row) {
@@ -317,14 +303,16 @@ function formatBuildName(row) {
     const classTalents = row.class_talents && Array.isArray(row.class_talents) ? row.class_talents.map(talent =>
         `<span class="chip chip-class" title="Class Talent: ${talent}">${talent}</span>`
     ).join('') : '';
-    const specTalents = row.spec_talents && Array.isArray(row.spec_talents) ? row.spec_talents.map(talent =>
-        `<span class="chip chip-spec" title="Spec Talent: ${talent}">${talent}</span>`
+    const offensiveTalents = row.offensive_talents && Array.isArray(row.offensive_talents) ? row.offensive_talents.map(talent =>
+        `<span class="chip chip-spec chip-offensive" title="Offensive Talent: ${talent}">${talent}</span>`
+    ).join('') : '';
+    const defensiveTalents = row.defensive_talents && Array.isArray(row.defensive_talents) ? row.defensive_talents.map(talent =>
+        `<span class="chip chip-spec chip-defensive" title="Defensive Talent: ${talent}">${talent}</span>`
     ).join('') : '';
 
     return `
         <div class="build-name-container">
-            <div class="build-name-line">${heroTalent}${classTalents}</div>
-            <div class="build-name-line">${specTalents}</div>
+            ${heroTalent}${classTalents}${offensiveTalents}${defensiveTalents}
         </div>
     `;
 }
@@ -335,11 +323,10 @@ function formatNumber(num) {
     } else if (num >= 1000) {
         return (num / 1000).toFixed(2) + 'K';
     }
-    return num.toFixed(2);
+return num.toFixed(2);
 }
 
 function getBarColor(percentage) {
-    // Define color stops using Material Design colors
     const colorStops = [
         { percent: 0, color: '#4CAF50' },   // Material Green 500
         { percent: 2, color: '#8BC34A' },   // Material Light Green 500
@@ -351,7 +338,6 @@ function getBarColor(percentage) {
         { percent: 100, color: '#F44336' }  // Material Red 500
     ];
 
-    // Find the appropriate color stop
     for (let i = 0; i < colorStops.length - 1; i++) {
         if (percentage <= colorStops[i + 1].percent) {
             const t = (percentage - colorStops[i].percent) / (colorStops[i + 1].percent - colorStops[i].percent);
@@ -359,7 +345,6 @@ function getBarColor(percentage) {
         }
     }
 
-    // If percentage is greater than 100, return the last color
     return colorStops[colorStops.length - 1].color;
 }
 
@@ -394,8 +379,8 @@ function sortTable(n) {
     updateSortIndicator(n, currentSortDirection);
 }
 
-function sortData(data) {
-    return data.sort((a, b) => {
+function sortData() {
+    filteredData.sort((a, b) => {
         let aValue, bValue;
         if (currentSortColumn === 0) {
             aValue = a.full_name;
@@ -431,8 +416,6 @@ function updateSortIndicator(columnIndex, direction) {
     });
 }
 
-// Initialize
-
 function initializeData(rawData) {
     if (!Array.isArray(rawData) || rawData.length === 0) {
         console.error("rawData is empty or not an array");
@@ -445,32 +428,35 @@ function initializeData(rawData) {
         bestBuilds[metric] = findBestBuilds(rawData, metric);
     });
 
-    // Sort the data by 1T 300s descending
-    rawData.sort((a, b) => b.metrics['1T 300s'] - a.metrics['1T 300s']);
+    // Initialize filteredData with all data
+    filteredData = [...rawData];
 
-    updateTable(rawData);
+    // Sort the data by 1T 300s descending
+    currentSortColumn = reportTypes.indexOf('1T 300s') + 2;
+    currentSortDirection = 'desc';
+    sortData();
+
+    updateTable();
 
     // Add change event listeners to checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', applyFilters);
+        checkbox.addEventListener('change', updateSelectedFilters);
     });
 
     // Update sort indicator for 1T 300s
     updateSortIndicator(reportTypes.indexOf('1T 300s') + 2, 'desc');
 }
 
-function initializeFilters() {
-    generateFilterHTML();
-    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', updateSelectedFilters);
+window.onload = function () {
+    document.getElementById('toggleFilters').addEventListener('click', function() {
+        var filters = document.getElementById('filters');
+        filters.style.display = filters.style.display === 'none' ? 'flex' : 'none';
     });
-}
 
-window.onload = function() {
-    if (typeof rawData !== 'undefined' && Array.isArray(rawData)) {
+    if (typeof rawData !== 'undefined' && Array.isArray(rawData) && typeof filteredTalents !== 'undefined' && typeof reportTypes !== 'undefined') {
         generateFilterHTML();
         initializeData(rawData);
     } else {
-        console.error('rawData is not defined or is not an array');
+        console.error('rawData, filteredTalents, or reportTypes is not defined or rawData is not an array');
     }
 };

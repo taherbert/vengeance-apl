@@ -1,6 +1,6 @@
 # SimC configuration
 target_error=0.05
-report_details=1
+report_details=0
 single_actor_batch=1
 optimize_expressions=1
 
@@ -8,14 +8,15 @@ optimize_expressions=1
 demonhunter="Base"
 source=default
 spec=vengeance
-level=70
+level=80
 race=night_elf
 timeofday=day
 role=tank
 position=front
 talents=
+# talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMzYYMLzMYsNjZMjZGmZMzMbzMDzgBAAAgZbGYYssxkMYmZwyC
 # Felscarred
-# talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAYMzMjhZkZmxY2MzsNzgx2MmxMmhxMmZmtZmhZwAAAAAsYWMjhZRTDMzMDbb
+talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAYMzMjhZkZmxY2MmtZGM2mxMmxMjxMmZmtZmhZwAAAAAsYWMjhZRTDMzMDbb
 # Aldrachi
 # talents=CUkAAAAAAAAAAAAAAAAAAAAAAAAGjZmZMMjMzMGzmZmlxgx2MmxMmhZmxMzsNzMMDGAAAAmtZghxyGTygZmBLL
 
@@ -24,11 +25,11 @@ optimal_raid=1
 # override.bloodlust=0
 
 # Default consumables
-potion=elemental_potion_of_ultimate_power_3
-flask=iced_phial_of_corrupting_rage_3
-food=feisty_fish_sticks
-augmentation=draconic
-temporary_enchant=main_hand:buzzing_rune_3/off_hand:buzzing_rune_3
+potion=tempered_potion_3
+flask=flask_of_alchemical_chaos_3
+food=feast_of_the_divine_day
+augmentation=crystallized_augment_rune
+temporary_enchant=main_hand:algari_mana_oil_3/off_hand:algari_mana_oil_3
 
 # Imports
 input=gear.simc
