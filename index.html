@@ -90,7 +90,15 @@ h1 {
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
-
+.filter-section:first-child .filter-container {
+  grid-template-columns: 1fr;
+}
+.filter-section:nth-child(2) .filter-container {
+  grid-template-columns: 1fr;
+}
+.filter-section:nth-child(3) .filter-container {
+  grid-template-columns: 1fr;
+}
 .mdc-checkbox {
   display: flex;
   align-items: center;
@@ -511,12 +519,12 @@ h1 {
                 <div id="classTalentFilters" class="filter-container"></div>
             </div>
             <div class="filter-section">
-                <h3>Offensive Spec Talents</h3>
-                <div id="offensiveTalentFilters" class="filter-container"></div>
-            </div>
-            <div class="filter-section">
                 <h3>Defensive Spec Talents</h3>
                 <div id="defensiveTalentFilters" class="filter-container"></div>
+            </div>
+            <div class="filter-section">
+                <h3>Offensive Spec Talents</h3>
+                <div id="offensiveTalentFilters" class="filter-container"></div>
             </div>
         </div>
 
@@ -544,7 +552,42 @@ h1 {
     const reportTypes = ["1T 300s", "5T 60s", "5T 120s", "10T 60s", "10T 120s"];
     const filteredTalents = {"heroTalent": ["felscarred_student", "felscarred_flamebound", "aldrachi"], "classTalents": ["Hunt", "CA", "SoSp"], "offensiveTalents": ["CoA", "CoB", "DGB", "DiF", "NoSpB", "SF", "VF", "StF", "SC", "IS", "SpB", "Crush", "FtD"], "defensiveTalents": ["FFF", "LR", "VR", "ES"]};
 
-    // Global variables
+    const ABBREVIATIONS = {
+    "AF": "Ascending Flame",
+    "SpB": "Spirit Bomb",
+    "NoSpB": "No Spirit Bomb",
+    "BE": "Bulk Extraction",
+    "BB": "Burning Blood",
+    "SF": "Soul Furnace",
+    "FC": "Focused Cleave",
+    "CoA": "Chains of Anger",
+    "VF": "Volatile Flameblood",
+    "FD": "Fiery Demise",
+    "StF": "Stoke the Flames",
+    "CoB": "Cycle of Binding",
+    "BA": "Burning Alive",
+    "CF": "Charred Flesh",
+    "DGB": "Darkglare Boon",
+    "SC": "Soul Carver",
+    "Crush": "Soulcrush",
+    "IS": "Illuminated Sigils",
+    "DiF": "Down in Flames",
+    "CS": "Calcified Spikes",
+    "ES": "Extended Spikes",
+    "FFF": "Fel Flame Fortification",
+    "VR": "Void Reaver",
+    "PB": "Painbringer",
+    "FtD": "Feed the Demon",
+    "LR": "Last Resort",
+    "aldrachi": "Aldrachi Reaver",
+    "felscarred_flamebound": "Felscarred Flamebound",
+    "felscarred_student": "Felscarred Student",
+    "hunt": "The Hunt",
+    "CA": "Collective Anguish",
+    "CoSp": "Sigil of Spite"
+};
+
+// Global variables
 let globalTopValues = {};
 let globalPercentages = {};
 let currentSortColumn = 1;
@@ -631,6 +674,17 @@ function calculateGlobalValues(data) {
 function createCheckboxLabel(value, filterType, className) {
     const label = document.createElement('label');
     label.className = `mdc-checkbox ${className}`;
+
+    // Replace abbreviation with full name for display, case-insensitively
+    let displayValue = value;
+    const lowercaseValue = value.toLowerCase();
+    for (const [abbr, fullName] of Object.entries(ABBREVIATIONS)) {
+        if (abbr.toLowerCase() === lowercaseValue) {
+            displayValue = fullName;
+            break;
+        }
+    }
+
     label.innerHTML = `
         <input type="checkbox" class="mdc-checkbox__native-control" data-filter="${filterType}" value="${value}"/>
         <div class="mdc-checkbox__background">
@@ -638,7 +692,7 @@ function createCheckboxLabel(value, filterType, className) {
                 <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
             </svg>
         </div>
-        <span class="mdc-checkbox__label">${value}</span>
+        <span class="mdc-checkbox__label">${displayValue}</span>
     `;
     return label;
 }
@@ -658,7 +712,14 @@ function generateFilterHTML() {
         }
 
         if (Array.isArray(filteredTalents[filterType])) {
-            filteredTalents[filterType].forEach(value => {
+            // Sort the talents based on their order in ABBREVIATIONS
+            const sortedTalents = filteredTalents[filterType].sort((a, b) => {
+                const indexA = Object.keys(ABBREVIATIONS).indexOf(a);
+                const indexB = Object.keys(ABBREVIATIONS).indexOf(b);
+                return indexA - indexB;
+            });
+
+            sortedTalents.forEach(value => {
                 if (value) {
                     const label = createCheckboxLabel(value, filterType, `${filterType.toLowerCase()}-talent`);
                     container.appendChild(label);
@@ -845,15 +906,36 @@ function initializeVirtualScroll() {
 function formatBuildName(row) {
     if (!row) return '';
 
-    const heroTalent = row.hero_talent ? `<span class="chip chip-hero ${row.hero_talent.toLowerCase().includes('aldrachi') ? 'aldrachi' : 'felscarred'}" title="Hero Talent: ${row.hero_talent}">${row.hero_talent}</span>` : '';
-    const classTalents = row.class_talents && Array.isArray(row.class_talents) ? row.class_talents.map(talent =>
-        `<span class="chip chip-class" title="Class Talent: ${talent}">${talent}</span>`
+    function getFullTalentName(talent) {
+        const lowercaseTalent = talent.toLowerCase();
+        for (const [abbr, fullName] of Object.entries(ABBREVIATIONS)) {
+            if (abbr.toLowerCase() === lowercaseTalent) {
+                return fullName;
+            }
+        }
+        return talent;
+    }
+
+    function sortTalents(talents) {
+        return talents.sort((a, b) => {
+            const indexA = Object.keys(ABBREVIATIONS).indexOf(a);
+            const indexB = Object.keys(ABBREVIATIONS).indexOf(b);
+            return indexA - indexB;
+        });
+    }
+
+    const heroTalent = row.hero_talent ? `<span class="chip chip-hero ${row.hero_talent.toLowerCase().includes('aldrachi') ? 'aldrachi' : 'felscarred'}" title="Hero Talent: ${getFullTalentName(row.hero_talent)}">${getFullTalentName(row.hero_talent)}</span>` : '';
+
+    const classTalents = row.class_talents && Array.isArray(row.class_talents) ? sortTalents(row.class_talents).map(talent =>
+        `<span class="chip chip-class" title="Class Talent: ${getFullTalentName(talent)}">${talent}</span>`
     ).join('') : '';
-    const offensiveTalents = row.offensive_talents && Array.isArray(row.offensive_talents) ? row.offensive_talents.map(talent =>
-        `<span class="chip chip-spec chip-offensive" title="Offensive Talent: ${talent}">${talent}</span>`
+
+    const offensiveTalents = row.offensive_talents && Array.isArray(row.offensive_talents) ? sortTalents(row.offensive_talents).map(talent =>
+        `<span class="chip chip-spec chip-offensive" title="Offensive Talent: ${getFullTalentName(talent)}">${talent}</span>`
     ).join('') : '';
-    const defensiveTalents = row.defensive_talents && Array.isArray(row.defensive_talents) ? row.defensive_talents.map(talent =>
-        `<span class="chip chip-spec chip-defensive" title="Defensive Talent: ${talent}">${talent}</span>`
+
+    const defensiveTalents = row.defensive_talents && Array.isArray(row.defensive_talents) ? sortTalents(row.defensive_talents).map(talent =>
+        `<span class="chip chip-spec chip-defensive" title="Defensive Talent: ${getFullTalentName(talent)}">${talent}</span>`
     ).join('') : '';
 
     return `

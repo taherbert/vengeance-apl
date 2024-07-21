@@ -81,7 +81,15 @@ h1 {
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
-
+.filter-section:first-child .filter-container {
+  grid-template-columns: 1fr;
+}
+.filter-section:nth-child(2) .filter-container {
+  grid-template-columns: 1fr;
+}
+.filter-section:nth-child(3) .filter-container {
+  grid-template-columns: 1fr;
+}
 .mdc-checkbox {
   display: flex;
   align-items: center;

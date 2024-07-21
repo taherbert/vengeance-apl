@@ -2,31 +2,37 @@ import re
 from collections import defaultdict
 
 OFFENSIVE_TALENTS = {
-    "down_in_flames:1": "DiF",
-    "soulcrush:1": "Crush",
-    "soul_carver:1": "SC",
-    "darkglare_boon:1": "DGB",
-    "illuminated_sigils:1": "IS",
-    "feed_the_demon:1": "FtD",
-    "stoke_the_flames:1": "StF",
-    "cycle_of_binding:1": "CoB",
-    "chains_of_anger:1": "CoA",
-    "focused_cleave:1": "FC",
-    "soul_furnace:1": "SF",
-    "volatile_flameblood:1": "VF",
     "ascending_flame:1": "AF",
     "spirit_bomb:1": "SpB",
     "bulk_extraction:1": "BE",
+    "burning_blood:1": "BB",
+    "soul_furnace:1": "SF",
+    "focused_cleave:1": "FC",
+    "chains_of_anger:1": "CoA",
+    "volatile_flameblood:1": "VF",
     "fiery_demise:1": "FD",
+    "fiery_demise:2": "FD",
+    "stoke_the_flames:1": "StF",
+    "cycle_of_binding:1": "CoB",
     "burning_alive:1": "BA",
+    "charred_flesh:1": "CF",
+    "charred_flesh:2": "CF",
+    "darkglare_boon:1": "DGB",
+    "soul_carver:1": "SC",
+    "soulcrush:1": "Crush",
+    "illuminated_sigils:1": "IS",
+    "down_in_flames:1": "DiF",
 }
 
 DEFENSIVE_TALENTS = {
-    "extended_spikes:1": "ES",
     "calcified_spikes:1": "CS",
+    "extended_spikes:1": "ES",
+    "fel_flame_fortification:1": "FFF",
     "void_reaver:1": "VR",
     "painbringer:1": "PB",
-    "fel_flame_fortification:1": "FFF",
+    "painbringer:2": "PB",
+    "feed_the_demon:1": "FtD",
+    "feed_the_demon:2": "FtD",
     "last_resort:1": "LR"
 }
 
@@ -48,8 +54,8 @@ def create_unique_id(talents):
         elif talent in ABSENCE_INDICATORS:
             defensive_parts.append(ABSENCE_INDICATORS[talent])
 
-    offensive_id = "_".join(sorted(offensive_parts)) or "Base"
-    defensive_id = "_".join(sorted(defensive_parts)) or "NoDefensive"
+    offensive_id = "_".join(offensive_parts) or "Base"
+    defensive_id = "_".join(defensive_parts) or "NoDefensive"
 
     return f"{offensive_id}__{defensive_id}"
 
