@@ -2,10 +2,10 @@ import os
 import re
 import json
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 
-def extract_chart_data(file_path: str) -> Dict[str, float]:
+def extract_chart_data(file_path: str) -> Dict[str, Dict[str, Union[float, str]]]:
     with open(file_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
 
@@ -17,12 +17,13 @@ def extract_chart_data(file_path: str) -> Dict[str, float]:
 
     for profile in profilesets:
         name = profile.get('name', '')
-        dps = profile.get('mean', 0)  # Changed this line to get 'mean' directly
+        dps = profile.get('mean', 0)
+        talent_hash = profile.get('talent_hash', '')  # Extract talent hash here
 
         if dps == 0:
             print(f"Warning: No DPS data found for profile {name} in {file_path}")
 
-        chart_data[name] = dps
+        chart_data[name] = {'dps': dps, 'talent_hash': talent_hash}
     return chart_data
 
 def extract_filename_info(filename: str) -> str:
@@ -35,12 +36,12 @@ def parse_build_name(build_name: str) -> Dict[str, str]:
     spec_match = build_name.split('-')[-1] if '-' in build_name else ''
 
     spec_talents = spec_match.split('__') if '__' in spec_match else [spec_match, '']
-    offensive_talents = spec_talents[0].split('_') if spec_talents[0] else []
+    offensive_talents = spec_talents[0].strip().split('_') if spec_talents[0] else []
     defensive_talents = spec_talents[1].split('_') if len(spec_talents) > 1 else []
 
     return {
         'hero_talent': hero_match.group(1) if hero_match else "",
-        'class_talents': class_match.group(1).replace('_', ', ').split(', ') if class_match else [],
+        'class_talents': class_match.group(1).split('_') if class_match else [],
         'offensive_talents': offensive_talents,
         'defensive_talents': defensive_talents,
         'full_name': build_name
@@ -50,11 +51,9 @@ def collect_data() -> Tuple[Dict[str, Dict[str, Dict]], List[str]]:
     data = defaultdict(lambda: defaultdict(dict))
     report_types = set()
 
-    # Get the path to the 'reports' folder
     script_dir = os.path.dirname(os.path.abspath(__file__))
     reports_dir = os.path.join(script_dir, 'reports')
 
-    # Check if the reports directory exists
     if not os.path.exists(reports_dir):
         print(f"Error: Reports directory not found at {reports_dir}")
         return dict(data), []
@@ -66,9 +65,10 @@ def collect_data() -> Tuple[Dict[str, Dict[str, Dict]], List[str]]:
             if report_type:
                 report_types.add(report_type)
                 chart_data = extract_chart_data(file_path)
-                for build_name, value in chart_data.items():
+                for build_name, build_data in chart_data.items():
                     build_info = parse_build_name(build_name)
-                    data[build_info['full_name']][report_type] = value
+                    data[build_info['full_name']][report_type] = build_data['dps']
+                    data[build_info['full_name']]['talent_hash'] = build_data['talent_hash']
                     data[build_info['full_name']].update(build_info)
 
     return dict(data), sorted(report_types, key=lambda x: (int(x.split('T')[0]), int(x.split()[1][:-1])))
@@ -123,6 +123,7 @@ def generate_html(data: Dict[str, Dict[str, Dict]], report_types: List[str]) -> 
         'class_talents': build_data['class_talents'],
         'offensive_talents': build_data['offensive_talents'],
         'defensive_talents': build_data['defensive_talents'],
+        'talent_hash': build_data['talent_hash'],
         'overall_rank': overall_ranks[build],
         'metrics': {rt: round(build_data.get(rt, 0), 2) for rt in report_types}
     } for build, build_data in data.items()]

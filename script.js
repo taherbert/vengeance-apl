@@ -186,6 +186,24 @@ function updateSelectedFilters() {
     applyFilters();
 }
 
+window.copyTalentHash = function(talentHash, buttonElement) {
+    navigator.clipboard.writeText(talentHash).then(() => {
+        const copyIcon = buttonElement.querySelector('.copy-icon');
+        const successIcon = buttonElement.querySelector('.success-icon');
+
+        copyIcon.style.display = 'none';
+        successIcon.style.display = 'inline-block';
+        successIcon.style.color = '#4CAF50'; // Green color
+
+        setTimeout(() => {
+            copyIcon.style.display = 'inline-block';
+            successIcon.style.display = 'none';
+        }, 2000); // Reset after 2 seconds
+    }).catch(err => {
+        console.error('Failed to copy talent hash: ', err);
+    });
+};
+
 function applyFilters() {
     const selectedFilters = {
         heroTalent: new Set(),
@@ -384,9 +402,21 @@ function formatBuildName(row) {
         `<span class="chip chip-spec chip-defensive" title="Defensive Talent: ${getFullTalentName(talent)}">${talent}</span>`
     ).join('') : '';
 
+    const copyButton = `
+        <button class="copy-hash-btn" onclick="copyTalentHash('${row.talent_hash || 'No hash available'}', this)" title="Copy talent hash">
+            <i class="material-icons copy-icon">content_copy</i>
+            <i class="material-icons success-icon" style="display: none;">check_circle</i>
+        </button>
+    `;
+
     return `
         <div class="build-name-container">
-            ${heroTalent}${classTalents}${offensiveTalents}${defensiveTalents}
+            <div class="copy-button-container">
+                ${copyButton}
+            </div>
+            <div class="talents-container">
+                ${heroTalent}${classTalents}${offensiveTalents}${defensiveTalents}
+            </div>
         </div>
     `;
 }
@@ -490,6 +520,31 @@ function updateSortIndicator(columnIndex, direction) {
     });
 }
 
+function updateTalentTrees(bestBuilds) {
+    const baseUrl = 'https://mimiron.raidbots.com/simbot/render/talents/';
+    const commonParams = '?width=322&level=80&&hideHeader=1';
+
+  if (bestBuilds['1T 300s'] && bestBuilds['1T 300s'].bestAldrachi) {
+    document.getElementById('aldrachiSingleTarget').src =
+      `${baseUrl}${bestBuilds['1T 300s'].bestAldrachi.talent_hash}${commonParams}`;
+  }
+
+  if (bestBuilds['Overall'] && bestBuilds['Overall'].bestAldrachi) {
+    document.getElementById('aldrachiOverall').src =
+      `${baseUrl}${bestBuilds['Overall'].bestAldrachi.talent_hash}${commonParams}`;
+  }
+
+  if (bestBuilds['1T 300s'] && bestBuilds['1T 300s'].bestFelscarred) {
+    document.getElementById('felscarredSingleTarget').src =
+      `${baseUrl}${bestBuilds['1T 300s'].bestFelscarred.talent_hash}${commonParams}`;
+  }
+
+  if (bestBuilds['Overall'] && bestBuilds['Overall'].bestFelscarred) {
+    document.getElementById('felscarredOverall').src =
+      `${baseUrl}${bestBuilds['Overall'].bestFelscarred.talent_hash}${commonParams}`;
+  }
+}
+
 function initializeData(rawData) {
     if (!Array.isArray(rawData) || rawData.length === 0) {
         console.error("rawData is empty or not an array");
@@ -502,8 +557,15 @@ function initializeData(rawData) {
         bestBuilds[metric] = findBestBuilds(rawData, metric);
     });
 
-    // Initialize filteredData with all data
-    filteredData = [...rawData];
+    bestBuilds['Overall'] = findBestBuilds(rawData, 'overall_rank');
+    // Update talent trees
+    updateTalentTrees(bestBuilds);
+
+    // Initialize filteredData with all data, including talent_hash
+    filteredData = rawData.map(row => ({
+        ...row,
+        talent_hash: row.talent_hash || ''  // Ensure talent_hash is included
+    }));
 
     // Sort the data by 1T 300s descending
     currentSortColumn = reportTypes.indexOf('1T 300s') + 2;

@@ -2,14 +2,89 @@ import argparse
 import configparser
 import functools
 import os
+import pickle
 import re
 import subprocess
 import sys
+import time
+import json
 from datetime import datetime
+import multiprocessing
+from functools import partial
+from collections.abc import Iterable
+from talenthasher import generate_talent_hash
+import queue
+from tqdm import tqdm
+
 
 # Global caches
+CACHE_FILE = "talent_hash_cache.pkl"
 _profile_cache = None
 _talent_filter_cache = {}
+
+class ProgressTracker:
+    def __init__(self, total_profiles, total_simulations):
+        self.total_profiles = total_profiles
+        self.total_simulations = total_simulations
+        self.total_profiles_all_sims = total_profiles * total_simulations
+        self.message_queue = queue.Queue()
+
+        # Calculate the maximum width needed for the count
+        max_count_width = len(str(self.total_profiles_all_sims))
+
+        # Custom format for the right side of the progress bar
+        r_bar_format = "{{n_fmt:>{0}s}}/{{total_fmt:>{0}s}} [{{elapsed}}<{{remaining}}, {{rate_fmt}}]".format(max_count_width)
+
+        # Full format specification for the progress bar
+        format_spec = "{{desc:<20}}|{{bar:50}}|{0}".format(r_bar_format)
+
+        self.overall_bar = tqdm(total=self.total_profiles_all_sims, desc="Overall Progress",
+                                position=0, unit="profile", bar_format=format_spec)
+        self.current_bar = tqdm(total=self.total_profiles, desc="Current Simulation",
+                                position=1, unit="profile", leave=False, bar_format=format_spec)
+
+    def update(self, line):
+        if "Generating Profileset:" in line or "Profilesets" in line:
+            self.overall_bar.update(1)
+            self.current_bar.update(1)
+
+    def start_simulation(self, simulation_number):
+        self.current_bar.reset()
+        self.current_bar.set_description(f"Sim {simulation_number}/{self.total_simulations}")
+
+    def queue_message(self, message):
+        self.message_queue.put(message)
+
+    def print_queued_messages(self):
+        while not self.message_queue.empty():
+            print(self.message_queue.get())
+
+    def close(self):
+        self.overall_bar.close()
+        self.current_bar.close()
+
+def ensure_output_directory(directory):
+    if not os.path.exists(directory):
+        try:
+            os.makedirs(directory)
+            print(f"Created output directory: {directory}")
+        except OSError as e:
+            print(f"Error creating output directory {directory}: {e}")
+            return False
+    return True
+
+def load_talent_hash_cache():
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, 'rb') as f:
+                return pickle.load(f)
+        except:
+            print("Error loading talent hash cache. Generating new cache.")
+    return {}
+
+def save_talent_hash_cache(cache):
+    with open(CACHE_FILE, 'wb') as f:
+        pickle.dump(cache, f)
 
 def load_config(config_path):
     config = configparser.ConfigParser()
@@ -26,6 +101,55 @@ def find_simc_files(folder_path):
         raise FileNotFoundError(f"profile_templates.simc not found in {folder_path}")
 
     return character_file, profiles_file
+
+def update_json_with_hashes(json_file, talent_hashes):
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+
+    def extract_names(profile_name):
+        match = re.match(r'\[(.*?)\] \((.*?)\) - (.*)', profile_name)
+        if match:
+            return match.groups()
+        parts = re.split(r'[\[\](),-]', profile_name)
+        parts = [part.strip() for part in parts if part.strip()]
+        if len(parts) >= 3:
+            return parts[0], parts[1], parts[2]
+        return None, None, None
+
+    # Update the profilesets section
+    if 'sim' in data and 'profilesets' in data['sim']:
+        for result in data['sim']['profilesets']['results']:
+            profile_name = result['name']
+            if profile_name == "Base":
+                continue
+
+            hero_name, class_name, spec_name = extract_names(profile_name)
+            if hero_name and class_name and spec_name:
+                hash_key = f"{hero_name}_{class_name}_{spec_name}"
+                talent_hash = talent_hashes.get(hash_key, "unknown_hash")
+                result['talent_hash'] = talent_hash
+            else:
+                print(f"Warning: Could not parse profile name: {profile_name}")
+                result['talent_hash'] = "unknown_hash"
+
+    # Update the players section (optional, as it might not be needed)
+    if 'players' in data['sim']:
+        for profile in data['sim']['players']:
+            profile_name = profile['name']
+            if profile_name == "Base":
+                continue
+
+            hero_name, class_name, spec_name = extract_names(profile_name)
+            if hero_name and class_name and spec_name:
+                hash_key = f"{hero_name}_{class_name}_{spec_name}"
+                talent_hash = talent_hashes.get(hash_key, "unknown_hash")
+                profile['talent_hash'] = talent_hash
+            else:
+                print(f"Warning: Could not parse profile name: {profile_name}")
+                profile['talent_hash'] = "unknown_hash"
+
+    with open(json_file, 'w') as f:
+        json.dump(data, f, indent=2)
 
 def parse_profiles_simc(profiles_path):
     global _profile_cache
@@ -46,8 +170,38 @@ def parse_profiles_simc(profiles_path):
         talent_defs = re.findall(r'\$\(([\w_]+)\)="([^"]+)"', section_content)
         talents[section_name] = dict(talent_defs)
 
-    _profile_cache = talents
-    return talents
+    # Load cached talent hashes
+    talent_hashes = load_talent_hash_cache()
+
+    combinations = [
+        (hero_name, class_name, spec_name, hero_talent, class_talent, spec_talent)
+        for hero_name, hero_talent in talents['hero_talents'].items()
+        for class_name, class_talent in talents['class_talents'].items()
+        for spec_name, spec_talent in talents['spec_talents'].items()
+    ]
+
+    new_hashes = False
+    print("Generating talent hashes...")
+
+    with tqdm(total=len(combinations), desc="Talent Hash Progress", bar_format="{desc:<30}{percentage:3.0f}%|{bar:50}{r_bar}") as pbar:
+        for hero_name, class_name, spec_name, hero_talent, class_talent, spec_talent in combinations:
+            hash_key = f"{hero_name}_{class_name}_{spec_name}"
+            if hash_key not in talent_hashes:
+                try:
+                    talent_hash = generate_talent_hash(hero_talent, class_talent, spec_talent)
+                    talent_hashes[hash_key] = talent_hash
+                    new_hashes = True
+                except Exception as exc:
+                    print(f'Talent hash generation failed for {hash_key}: {exc}')
+            pbar.update(1)
+
+    if new_hashes:
+        save_talent_hash_cache(talent_hashes)
+
+    print("Talent hash generation completed.")
+
+    _profile_cache = (talents, talent_hashes)
+    return talents, talent_hashes
 
 @functools.lru_cache(maxsize=None)
 def generate_simc_profile(hero_talents, class_talents, spec_talents):
@@ -59,7 +213,7 @@ def generate_simc_profile(hero_talents, class_talents, spec_talents):
         f'profileset."{formatted_name}"+="spec_talents=$({spec_talents})"'
     ])
 
-def create_simc_file(character_content, profiles_content, profiles, apl_folder, sim_targets, sim_time, iterations=None, target_error=None, json_output=False, html_output=True, output_path=None):
+def create_simc_file(character_content, profiles_content, profiles, apl_folder, sim_targets, sim_time, iterations=None, target_error=None, json_output=False, html_output=True, output_path=None, talent_hashes=None):
     # Update character content with sim_targets and sim_time
     updated_character_content = update_character_simc(character_content, sim_targets, sim_time, iterations, target_error, json_output, html_output, output_path)
 
@@ -71,20 +225,41 @@ def create_simc_file(character_content, profiles_content, profiles, apl_folder, 
     with open(temp_file_path, 'w') as temp_file:
         temp_file.write(content)
 
+    profiles_with_hashes = []
+    for profile in profiles:
+        match = re.search(r'profileset\."([^"]+)"', profile)
+        if match:
+            profile_name = match.group(1)
+            hero_name, class_name, spec_name = profile_name.split('] (')[0][1:], profile_name.split('] (')[1].split(') - ')[0], profile_name.split(' - ')[1]
+            hash_key = f"{hero_name}_{class_name}_{spec_name}"
+            talent_hash = talent_hashes.get(hash_key, "unknown_hash")
+            profile_with_hash = f"{profile}\n# talent_hash={talent_hash}"
+            profiles_with_hashes.append(profile_with_hash)
+        else:
+            profiles_with_hashes.append(profile)
+
+    content = f"{updated_character_content}\n\n" + "\n".join(filtered_profiles_content) + "\n\n" + "\n\n".join(profiles_with_hashes)
+
     profile_names = [re.search(r'profileset\."([^"]+)"', profile).group(1) for profile in profiles]
     return temp_file_path, profile_names
 
-def run_simc(simc_path, simc_file, output_path, profile_names, json_output=False, html_output=True):
+def run_simc(simc_path, simc_file, output_path, profile_names, json_output, html_output,
+             total_profiles, total_simulations, simulation_number, progress_tracker):
     temp_file_deleted = False
     try:
         simc_path, simc_file = map(os.path.abspath, [simc_path, simc_file])
         output_path = os.path.abspath(output_path)
+        output_dir = os.path.dirname(output_path)
         simc_dir = os.path.dirname(simc_file)
         original_dir = os.getcwd()
         os.chdir(simc_dir)
 
+        if not os.access(output_dir, os.W_OK):
+            progress_tracker.queue_message(f"Error: No write permission in the output directory: {output_dir}")
+            return None, temp_file_deleted
+
         if not os.path.exists(simc_path):
-            print(f"Error: SimC executable not found at {simc_path}")
+            progress_tracker.queue_message(f"Error: SimC executable not found at {simc_path}")
             return None, temp_file_deleted
 
         command = [simc_path, os.path.basename(simc_file)]
@@ -95,51 +270,29 @@ def run_simc(simc_path, simc_file, output_path, profile_names, json_output=False
             json_file = output_path if not html_output else output_path.replace('.html', '.json')
             command.append(f'json2={json_file}')
 
-        print(f"Running SimC command: {' '.join(command)}")  # Debug print
+        progress_tracker.start_simulation(simulation_number)
 
-        process = subprocess.Popen(command,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   universal_newlines=True)
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   universal_newlines=True, bufsize=1)
 
-        pattern = re.compile(r'(\d+)/(\d+) \[.*\] \d+/\d+ .* \((\d+m, \d+s|\d+s)\)$')
-        max_line_length = 0
+        for line in iter(process.stdout.readline, ''):
+            progress_tracker.update(line)
 
-        while True:
-            output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                match = pattern.search(output)
-                if match:
-                    current, total, remaining_time = match.groups()
-                    current_profile = profile_names[int(current) - 1] if int(current) <= len(profile_names) else "Unknown"
-                    output_line = f"\rSimulating profile {current}/{total}, {remaining_time} remaining - Current: {current_profile}"
+        stdout, stderr = process.communicate()
 
-                    # Pad the output line with spaces to overwrite the entire previous line
-                    max_line_length = max(max_line_length, len(output_line))
-                    padded_output = output_line.ljust(max_line_length)
-
-                    sys.stdout.write(padded_output)
-                    sys.stdout.flush()
-
-        # Clear the last line
-        sys.stdout.write('\r' + ' ' * max_line_length + '\r')
-        sys.stdout.flush()
-        sys.stdout.write("\n")
-        rc = process.poll()
+        rc = process.returncode
         if rc != 0:
-            print(f"SimC process exited with return code {rc}")
-            print(f"SimC stderr output: {process.stderr.read()}")
+            progress_tracker.queue_message(f"SimC process exited with return code {rc}")
+            progress_tracker.queue_message(f"SimC stderr output: {stderr}")
+            if "Failed to open JSON output file" in stderr:
+                progress_tracker.queue_message("Error: Unable to create or write to JSON file. Please check permissions and available disk space.")
             return None, temp_file_deleted
 
+        progress_tracker.queue_message("SimC completed successfully")
         return "SimC completed successfully", temp_file_deleted
-    except subprocess.CalledProcessError as e:
-        print(f"Error running SimC: {e}")
-        print(f"SimC stderr output: {e.stderr}")
-        return None, temp_file_deleted
-    except FileNotFoundError:
-        print(f"Error: simc executable not found at {simc_path}")
+
+    except Exception as e:
+        progress_tracker.queue_message(f"Unexpected error occurred: {e}")
         return None, temp_file_deleted
     finally:
         os.chdir(original_dir)
@@ -147,27 +300,11 @@ def run_simc(simc_path, simc_file, output_path, profile_names, json_output=False
             os.remove(simc_file)
             temp_file_deleted = True
         except OSError as e:
-            print(f"Error deleting temporary file {simc_file}: {e}")
+            progress_tracker.queue_message(f"Error deleting temporary file {simc_file}: {e}")
 
-def update_html_title(html_file):
-    with open(html_file, 'r', encoding='utf-8') as file:
-        content = file.read()
-
-    # Extract filename without extension
-    filename = os.path.splitext(os.path.basename(html_file))[0]
-
-    # Replace the title
-    new_content = re.sub(r'<title>SimulationCraft</title>',
-                         f'<title>{filename}</title>', content)
-
-    with open(html_file, 'w', encoding='utf-8') as file:
-        file.write(new_content)
-
-def filter_talents(talents, include_list, exclude_list, talent_type=''):
-    cache_key = (frozenset(talents.items()), frozenset(include_list), frozenset(exclude_list), talent_type)
-    if cache_key in _talent_filter_cache:
-        return _talent_filter_cache[cache_key]
-
+@functools.lru_cache(maxsize=None)
+def filter_talents(talents_items, include_list, exclude_list, talent_type=''):
+    talents = dict(talents_items)
     filtered_talents = []
     for talent_name, talent_content in talents.items():
         talent_abilities = set(ability.split(':')[0].lower() for ability in talent_content.split('/'))
@@ -187,7 +324,6 @@ def filter_talents(talents, include_list, exclude_list, talent_type=''):
         if include:
             filtered_talents.append((talent_name, talent_content))
 
-    _talent_filter_cache[cache_key] = filtered_talents
     return filtered_talents
 
 def generate_output_filename(config, sim_targets, sim_time):
@@ -293,16 +429,35 @@ def cleanup_files(files_to_delete):
             except OSError as e:
                 print(f"Error deleting file {file_path}: {e}")
 
+def run_additional_script(script_name, config_path=None):
+    command = [sys.executable, script_name]
+    if config_path:
+        command.append(config_path)
+
+    print(f"\nRunning {script_name}...")
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+    for line in process.stdout:
+        print(line.strip())
+
+    _, stderr = process.communicate()
+    if process.returncode != 0:
+        print(f"Error running {script_name}:")
+        print(stderr)
+    else:
+        print(f"{script_name} completed successfully.")
+
 def main(config_path):
     config = load_config(config_path)
     iterations = config['Simulations'].get('iterations', None)
     target_error = config['Simulations'].get('target_error', None)
     json_output = config['General'].getboolean('json_output', fallback=False)
     html_output = config['General'].getboolean('html_output', fallback=True)
-
-    # Set up report folder
     report_folder = config['General'].get('report_folder', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reports'))
-    os.makedirs(report_folder, exist_ok=True)
+
+    if not ensure_output_directory(report_folder):
+        print("Error: Unable to create or access the report folder. Exiting.")
+        return
 
     try:
         character_file, profiles_file = find_simc_files(config['General']['apl_folder'])
@@ -324,133 +479,130 @@ def main(config_path):
         print(f"Error: SimulationCraft executable not found at: {config['General']['simc']}")
         return
 
-    if config['Simulations'].getboolean('single_sim', fallback=False):
-        print("Running single simulation with talent string from character.simc")
-        sim_targets = config['Simulations'].getint('targets', fallback=1)
-        sim_time = config['Simulations'].getint('time', fallback=300)
+    talents, talent_hashes = parse_profiles_simc(profiles_file)
 
-        output_filename = generate_output_filename(config, sim_targets, sim_time)
-        output_path = os.path.join(report_folder, output_filename)
-        if not html_output:
-            output_path = output_path.replace('.html', '.json')
+    filtered_talents = {
+        'hero_talents': filter_talents(
+            tuple(talents['hero_talents'].items()),
+            tuple(config['TalentFilters']['hero_talents'].split()),
+            tuple(config['TalentFilters']['hero_talents_exclude'].split()),
+            'hero_talents'
+        ),
+        'class_talents': filter_talents(
+            tuple(talents['class_talents'].items()),
+            tuple(config['TalentFilters']['class_talents'].split()),
+            tuple(config['TalentFilters']['class_talents_exclude'].split()),
+            'class_talents'
+        ),
+        'spec_talents': filter_talents(
+            tuple(talents['spec_talents'].items()),
+            tuple(config['TalentFilters']['spec_talents'].split()),
+            tuple(config['TalentFilters']['spec_talents_exclude'].split()),
+            'spec_talents'
+        )
+    }
 
-        temp_file_path = os.path.abspath(os.path.join(config['General']['apl_folder'], "temp_simc_input.simc"))
-        with open(temp_file_path, 'w') as temp_file:
-            temp_file.write(update_character_simc(character_content, sim_targets, sim_time, iterations, target_error, json_output, html_output, output_path))
+    if not any(filtered_talents.values()):
+        print("Error: No valid profiles generated. Please check your talent selections.")
+        return
 
-        print(f"Starting SimC simulation...")
-        results, temp_file_deleted = run_simc(config['General']['simc'], temp_file_path, output_path, ["Single Sim"], json_output, html_output)
+    profiles = [
+        generate_simc_profile(hero_name, class_name, spec_name)
+        for hero_name, _ in filtered_talents['hero_talents']
+        for class_name, _ in filtered_talents['class_talents']
+        for spec_name, _ in filtered_talents['spec_talents']
+    ]
 
-        if results:
-            print("\nSimC Results:")
-            print(results)
-            if html_output:
-                print(f"HTML output saved to: {output_path}")
-            if json_output:
-                json_path = output_path if not html_output else output_path.replace('.html', '.json')
-                if os.path.exists(json_path):
-                    print(f"JSON output saved to: {json_path}")
-                else:
-                    print(f"Warning: JSON file not found at {json_path}")
-        else:
-            print("\nSimC did not produce any results.")
+    if not profiles:
+        print("Error: No valid profiles generated. Please check your talent selections.")
+        return
 
-        if not temp_file_deleted:
-            cleanup_files([temp_file_path])
-
-    else:
-        try:
-            talents = parse_profiles_simc(profiles_file)
-        except ValueError as e:
-            print(f"Error parsing profile_templates.simc: {e}")
-            return
-
-        filtered_talents = {
-            'hero_talents': filter_talents(talents['hero_talents'], config['TalentFilters']['hero_talents'].split(), config['TalentFilters']['hero_talents_exclude'].split(), 'hero_talents'),
-            'class_talents': filter_talents(talents['class_talents'], config['TalentFilters']['class_talents'].split(), config['TalentFilters']['class_talents_exclude'].split(), 'class_talents'),
-            'spec_talents': filter_talents(talents['spec_talents'], config['TalentFilters']['spec_talents'].split(), config['TalentFilters']['spec_talents_exclude'].split(), 'spec_talents')
-        }
-
-        if not any(filtered_talents.values()):
-            print("Error: No valid profiles generated. Please check your talent selections.")
-            return
-
-        search_terms = {
-            'hero_talents': set(config['TalentFilters']['hero_talents'].split()),
-            'hero_talents_exclude': set(config['TalentFilters']['hero_talents_exclude'].split()),
-            'class_talents': set(config['TalentFilters']['class_talents'].split()),
-            'class_talents_exclude': set(config['TalentFilters']['class_talents_exclude'].split()),
-            'spec_talents': set(config['TalentFilters']['spec_talents'].split()),
-            'spec_talents_exclude': set(config['TalentFilters']['spec_talents_exclude'].split())
-        }
-
-        profiles = [
-            generate_simc_profile(hero_name, class_name, spec_name)
-            for hero_name, _ in filtered_talents['hero_talents']
-            for class_name, _ in filtered_talents['class_talents']
-            for spec_name, _ in filtered_talents['spec_talents']
-        ]
-
-        if not profiles:
-            print("Error: No valid profiles generated. Please check your talent selections.")
-            return
-
-        if 'targettime' in config['Simulations']:
-            targettime = config['Simulations']['targettime'].strip()
-            if targettime:
-                simulations = [tuple(map(int, combo.split(','))) for combo in targettime.split() if combo.strip()]
-                if not simulations:
-                    print("Warning: No valid target-time combinations found in config. Using default values.")
-                    targets = config['Simulations'].getint('targets', fallback=1)
-                    time = config['Simulations'].getint('time', fallback=300)
-                    simulations = [(targets, time)]
-            else:
-                print("Warning: Empty targettime in config. Using default values.")
+    if 'targettime' in config['Simulations']:
+        targettime = config['Simulations']['targettime'].strip()
+        if targettime:
+            simulations = [tuple(map(int, combo.split(','))) for combo in targettime.split() if combo.strip()]
+            if not simulations:
+                print("Warning: No valid target-time combinations found in config. Using default values.")
                 targets = config['Simulations'].getint('targets', fallback=1)
                 time = config['Simulations'].getint('time', fallback=300)
                 simulations = [(targets, time)]
         else:
+            print("Warning: Empty targettime in config. Using default values.")
             targets = config['Simulations'].getint('targets', fallback=1)
             time = config['Simulations'].getint('time', fallback=300)
             simulations = [(targets, time)]
+    else:
+        targets = config['Simulations'].getint('targets', fallback=1)
+        time = config['Simulations'].getint('time', fallback=300)
+        simulations = [(targets, time)]
 
-        print_summary(talents, filtered_talents, profiles, search_terms, config, simulations)
+    print_summary(talents, filtered_talents, profiles, {
+        'hero_talents': set(config['TalentFilters']['hero_talents'].split()),
+        'hero_talents_exclude': set(config['TalentFilters']['hero_talents_exclude'].split()),
+        'class_talents': set(config['TalentFilters']['class_talents'].split()),
+        'class_talents_exclude': set(config['TalentFilters']['class_talents_exclude'].split()),
+        'spec_talents': set(config['TalentFilters']['spec_talents'].split()),
+        'spec_talents_exclude': set(config['TalentFilters']['spec_talents_exclude'].split())
+    }, config, simulations)
 
-        for sim_targets, sim_time in simulations:
-            print(f"\nPreparing simulation for {sim_targets} target(s) and {sim_time} seconds")
+    total_profiles = len(profiles)
+    total_simulations = len(simulations)
 
+    progress_tracker = ProgressTracker(total_profiles, total_simulations)
+
+    try:
+        for sim_index, (sim_targets, sim_time) in enumerate(simulations, 1):
             output_filename = generate_output_filename(config, sim_targets, sim_time)
             output_path = os.path.join(report_folder, output_filename)
             if not html_output:
                 output_path = output_path.replace('.html', '.json')
 
-            simc_file, profile_names = create_simc_file(character_content, profiles_content, profiles, config['General']['apl_folder'], sim_targets, sim_time, iterations, target_error, json_output, html_output, output_path)
+            simc_file, profile_names = create_simc_file(character_content, profiles_content, profiles,
+                                                        config['General']['apl_folder'], sim_targets, sim_time,
+                                                        iterations, target_error, json_output, html_output,
+                                                        output_path, talent_hashes)
 
-            if html_output:
-                print(f"HTML output will be saved to: {output_path}")
-            if json_output:
-                json_path = output_path if not html_output else output_path.replace('.html', '.json')
-                print(f"JSON output will be saved to: {json_path}")
-            print(f"Starting SimC simulation...")
-            results, temp_file_deleted = run_simc(config['General']['simc'], simc_file, output_path, profile_names, json_output, html_output)
+            results, temp_file_deleted = run_simc(
+                config['General']['simc'], simc_file, output_path, profile_names,
+                json_output, html_output, total_profiles, total_simulations, sim_index,
+                progress_tracker
+            )
 
             if results:
-                print("\nSimC Results:")
-                print(results)
+                progress_tracker.queue_message("\nSimC Results:")
+                progress_tracker.queue_message(results)
                 if html_output:
-                    print(f"HTML output saved to: {output_path}")
+                    progress_tracker.queue_message(f"HTML output saved to: {output_path}")
                 if json_output:
                     json_path = output_path if not html_output else output_path.replace('.html', '.json')
                     if os.path.exists(json_path):
-                        print(f"JSON output saved to: {json_path}")
+                        progress_tracker.queue_message(f"Updating JSON output with talent hashes...")
+                        try:
+                            update_json_with_hashes(json_path, talent_hashes)
+                            progress_tracker.queue_message(f"JSON output updated and saved to: {json_path}")
+                        except Exception as e:
+                            progress_tracker.queue_message(f"Error updating JSON with talent hashes: {e}")
                     else:
-                        print(f"Warning: JSON file not found at {json_path}")
+                        progress_tracker.queue_message(f"Warning: JSON file not found at {json_path}")
             else:
-                print("\nSimC did not produce any results.")
+                progress_tracker.queue_message("\nSimC did not produce any results.")
 
             if not temp_file_deleted:
                 cleanup_files([simc_file])
 
+    finally:
+        progress_tracker.close()
+        progress_tracker.print_queued_messages()
+
+    print("\nAll simulations completed.")
+
+    # Run combine.py
+    run_additional_script("combine.py", config_path)
+
+    # Run compare_reports.py
+    run_additional_script("compare_reports.py")
+
+    print("\nFull pipeline completed successfully!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate and run SimulationCraft profiles')

@@ -8,6 +8,12 @@ log.txt
 *.code-workspace
 .DS_Store
 config.ini
+venv/
+reports/
+*.lock
+*.pkl
+temp_simc_input.simc
+__pycache__/
 
 # Allow
 !index.html

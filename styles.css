@@ -73,8 +73,8 @@ h1 {
 
 .filter-section:nth-child(1) h3 { color: var(--hero-color); }
 .filter-section:nth-child(2) h3 { color: var(--class-color); }
-.filter-section:nth-child(3) h3 { color: var(--chip-color); }
-.filter-section:nth-child(4) h3 { color: var(--defensive-color); }
+.filter-section:nth-child(3) h3 { color: var(--defensive-color); }
+.filter-section:nth-child(4) h3 { color: var(--chip-color); }
 
 .filter-container {
   display: grid;
@@ -251,16 +251,22 @@ h1 {
 .mdc-data-table__cell.build-name {
   width: auto;
   white-space: normal;
-  min-width: 200px;
+  min-width: 300px;
   max-width: 400px;
 }
 
 .mdc-data-table__header-cell.rank,
 .mdc-data-table__cell.rank {
-  width: 80px;
+  width: 60px;
+  max-width: 60px;
 }
 .mdc-data-table__cell.rank {
   text-align: center;
+}
+
+.mdc-data-table__header-cell:not(.build-name),
+.mdc-data-table__cell:not(.build-name) {
+    max-width: 100px;
 }
 
 .mdc-data-table__header-cell:not(.build-name):not(.rank),
@@ -350,7 +356,7 @@ h1 {
 
 .chip-hero.aldrachi { background-color: var(--aldrachi); }
 .chip-hero.felscarred { background-color: var(--felscarred); }
-.chip-class { background-color: var(--class-bg); }
+.chip-class { background-color: var(--class-color); }
 .chip-spec { background-color: var(--spec-bg); }
 .chip-offensive { background-color: var(--spec-bg); }
 .chip-defensive { background-color: var(--defensive-bg); }
@@ -399,21 +405,25 @@ h1 {
 
 .metric-container {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
 }
 
 .metric-value {
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .metric-diff {
-  font-size: 0.75rem;
-  opacity: 0.7;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    align-self: flex-start;
+    padding-top: 1px;
 }
 
 .linear-progress {
+  width: 100%;
   height: 4px;
   background-color: rgba(255, 255, 255, 0.12);
   border-radius: 2px;
@@ -491,4 +501,110 @@ h1 {
 
 #toggleFilters {
   margin-bottom: 16px;
+}
+
+.build-name-container {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.copy-button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.talents-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.copy-hash-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    border-radius: 50%;
+    position: relative; /* Add this */
+}
+
+.copy-hash-btn .success-icon {
+    color: #4CAF50; /* Green color */
+    display: none;
+}
+
+.copy-hash-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.copy-hash-btn i {
+    font-size: 18px;
+    color: #757575;
+    position: absolute; /* Add this */
+    transition: opacity 0.3s ease; /* Add this */
+}
+
+.copy-hash-btn:hover i {
+    color: #424242;
+}
+
+.best-builds-container {
+    margin-top: 24px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.best-builds-container h2 {
+    color: var(--primary);
+    margin-bottom: 16px;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.best-builds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    overflow: hidden;
+}
+
+.best-build-section {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 225px;
+}
+
+.best-build-section h3 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0 0 12px 0;
+    padding: 0;
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.best-build-section:nth-child(1) h3 { color: var(--aldrachi); }
+.best-build-section:nth-child(2) h3 { color: var(--aldrachi); }
+.best-build-section:nth-child(3) h3 { color: var(--felscarred); }
+.best-build-section:nth-child(4) h3 { color: var(--felscarred); }
+
+.best-build-section iframe {
+    border: none;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.1);
 }
